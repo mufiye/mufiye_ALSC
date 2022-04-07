@@ -48,7 +48,7 @@ def parse_args():
                         help='Number of classes of ABSA.')
     parser.add_argument('--output_dir', type=str, default='datasets',
                         help='Directory to store intermedia data.')
-    parser.add_argument('--if_cuda', type=bool, default=True,
+    parser.add_argument('--if_cuda', default=True, action='store_false',
                         help='about use cuda or not')
     parser.add_argument('--seed', type=int, default=2019,
                         help='random seed for initialization')
