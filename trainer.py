@@ -261,7 +261,8 @@ def evaluate(args, eval_dataset, model):
     result = compute_metrics(preds, out_label_ids)
     results.update(result)
 
-    output_eval_file = os.path.join(args.output_dir, 'eval_results.txt')
+    eval_results_fileName = 'eval_results_{}.txt'.format(args.dataset_name)
+    output_eval_file = os.path.join('./saved_models', eval_results_fileName)
     with open(output_eval_file, 'a+') as writer:
         logger.info('***** Eval results *****')
         logger.info("  eval loss: %s", str(eval_loss))
