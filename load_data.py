@@ -76,7 +76,13 @@ def get_dataset(dataset_name):
 # 加载词表和词向量(如果不存在这两个文件，则保存词表和词向量文件)
 def load_and_cache_vocabs_vectors(data, args):
     # pkl用于存储词表
-    pkls_path = os.path.join(args.output_dir, 'pkls')
+    rest_dir = 'datasets/SemEval-2014/Restaurant'
+    laptop_dir = 'datasets/SemEval-2014/Laptop'
+    twitter_dir = 'datasets/Twitter'
+    pkl_dirs = {
+        'rest': rest_dir, 'laptop': laptop_dir, 'twitter': twitter_dir
+    }
+    pkls_path = os.path.join(pkl_dirs[args.dataset_name], 'pkls')
     if not os.path.exists(pkls_path):
         os.makedirs(pkls_path)
     if args.embedding_type == 'glove':
