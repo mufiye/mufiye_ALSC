@@ -67,7 +67,7 @@ def parse_args():
     # 需要修改的路径，\\与/, windows和linux的区别
     parser.add_argument('--glove_dir', type=str, default='./datasets/Glove',
                         help='Directory storing glove embeddings')
-    parser.add_argument('--bert_model_dir', type=str, default='',
+    parser.add_argument('--bert_model_dir', type=str, default='models/bert_base',
                         help='Path to pre-trained Bert model.')
     parser.add_argument('--pure_bert', action='store_true',
                         help='Cat text and aspect, [cls] to predict.')
