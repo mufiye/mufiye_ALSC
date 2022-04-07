@@ -96,7 +96,10 @@ collate_fn函数决定batch构成
 ### 2022.4.7
 1. 尝试训练BERT模型(要找到bert pretrained model并下载)
 2. 为每个模型的训练写一个shell脚本
-3. 写infer.py
+3. 尝试使用tensorboard（命令为tensorboard --logdir=runs\Apr07_21-02-09_g0016）
+4. 规范化改写代码、远端模型训练流程
+### 2022.4.8
+1. 写infer.py
 ### 其它待办
 1. 完善整体框架1（model package 3个python file）
 2. 存储dependency tree reshape后的结果
