@@ -261,7 +261,14 @@ def evaluate(args, eval_dataset, model):
     result = compute_metrics(preds, out_label_ids)
     results.update(result)
 
-    eval_results_fileName = 'eval_results_{}.txt'.format(args.dataset_name)
+    if args.pure_bert:
+        eval_results_fileName = 'eval_results_pure_bert_{}.txt'.format(args.dataset_name)
+    elif args.gat_bert:
+        eval_results_fileName = 'eval_results_gat_bert_{}.txt'.format(args.dataset_name)
+    elif args.gat_our:
+        eval_results_fileName = 'eval_results_gat_our_{}.txt'.format(args.dataset_name)
+    else:
+        eval_results_fileName = 'eval_results_gat_only_{}.txt'.format(args.dataset_name)
     output_eval_file = os.path.join('./saved_models', eval_results_fileName)
     with open(output_eval_file, 'a+') as writer:
         logger.info('***** Eval results *****')
