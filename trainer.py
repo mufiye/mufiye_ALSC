@@ -17,6 +17,8 @@ from tqdm import tqdm, trange
 from sklearn.metrics import f1_score
 
 #from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
+
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
 from load_data import my_collate, my_collate_pure_bert, my_collate_bert
@@ -103,6 +105,9 @@ def get_bert_optimizer(args, model):
 
 # 训练模型
 def train(args, train_dataset, model, test_dataset):
+    # the tensorboard writer
+    tb_writer = SummaryWriter()
+
     args.train_batch_size = args.per_gpu_train_batch_size
     train_sampler = RandomSampler(train_dataset)
 
@@ -168,6 +173,7 @@ def train(args, train_dataset, model, test_dataset):
             
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
+                # scheduler.step()  # Update learning rate schedule
                 optimizer.step()
                 model.zero_grad()
                 global_step += 1
@@ -178,6 +184,13 @@ def train(args, train_dataset, model, test_dataset):
                 if args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     results, eval_loss = evaluate(args, test_dataset, model)
                     all_eval_results.append(results)
+                    # record tensorboard data
+                    for key, value in results.items():
+                        tb_writer.add_scalar('eval_{}'.format(key), value, global_step)
+                    # tb_writer.add_scalar('lr', scheduler.get_lr()[0], global_step)
+                    tb_writer.add_scalar('eval_loss', eval_loss, global_step)
+                    tb_writer.add_scalar('train_loss', (tr_loss - logging_loss) / args.logging_steps, global_step)
+                    logging_loss = tr_loss
                     # store the best model
                     if results['acc'] > max_test_acc:
                         max_test_acc = results['acc']
@@ -214,6 +227,7 @@ def train(args, train_dataset, model, test_dataset):
                 os.mkdir('./saved_models/state_dict/checkPoint')
             torch.save(model, checkpoint_model_path)
 
+    tb_writer.close()
     return global_step, tr_loss/global_step, all_eval_results, best_model, model_path
 
        
