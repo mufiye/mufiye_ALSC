@@ -317,7 +317,10 @@ def get_rolled_and_unrolled_data(input_data, args):
             aspect = e['aspect_sentiment'][i][0].lower()
             # We would tokenize the aspect while at it.
             aspect = word_tokenize(aspect)
-            sentiment = sentiments_lookup[e['aspect_sentiment'][i][1]]
+            if not args.inInfer:
+                sentiment = sentiments_lookup[e['aspect_sentiment'][i][1]]
+            else:
+                sentiment = -1
             frm = e['from_to'][i][0]
             to = e['from_to'][i][1]
 
