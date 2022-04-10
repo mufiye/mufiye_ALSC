@@ -149,9 +149,6 @@ def parse_args():
     return parser.parse_args()
 
 def check_args(args):
-    '''
-    eliminate confilct situations
-    '''
     logger.info(vars(args))
 
 
@@ -178,7 +175,7 @@ def main():
         args.tokenizer = tokenizer
     
     # Load dataset: about dataset load python file
-    train_dataset, test_dataset, word_vocab, dep_tag_vocab, pos_tag_vocab= load_datasets_and_vocabs(args)
+    train_dataset, test_dataset, word_vocab, dep_tag_vocab, pos_tag_vocab = load_datasets_and_vocabs(args)
     # Build Model: about model package
     if args.pure_bert:
         model = Pure_Bert(args)

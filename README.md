@@ -119,5 +119,16 @@ Resource punkt not found. Please use the NLTK Downloader to obtain the resource:
 
 ### 关于编写代码和训练规范(2022.4.6)
 #### Question
-在本地端更改代码(注意不要把大的文件commit)，在训练端git clone，要写好每个脚本，尽可能下载state_dict
+关于编写代码和训练规范
 #### Solution
+在本地端更改代码(注意不要把大的文件commit)，在训练端git clone，要写好每个脚本，尽可能下载state_dict
+
+### 关于编写infer.py函数(2022.4.10)
+#### Question
+数据集的处理流程（在load_data.py和train.py文件中）
+#### Answer
+1. train_dataset, test_dataset, word_vocab, dep_tag_vocab, pos_tag_vocab = load_datasets_and_vocabs(args)
+2. get_dataset()函数获取原始的json格式的数据集
+3. get_rolled_and_unrolled_data()
+4. load_and_cache_vocabs_vectors()
+5. ALSC_Dataset()创建了数据集类
