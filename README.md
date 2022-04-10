@@ -124,11 +124,25 @@ Resource punkt not found. Please use the NLTK Downloader to obtain the resource:
 在本地端更改代码(注意不要把大的文件commit)，在训练端git clone，要写好每个脚本，尽可能下载state_dict
 
 ### 关于编写infer.py函数(2022.4.10)
-#### Question
+#### Question1
 数据集的处理流程（在load_data.py和train.py文件中）
-#### Answer
+#### Answer1
 1. train_dataset, test_dataset, word_vocab, dep_tag_vocab, pos_tag_vocab = load_datasets_and_vocabs(args)
 2. get_dataset()函数获取原始的json格式的数据集
 3. get_rolled_and_unrolled_data()
 4. load_and_cache_vocabs_vectors()
 5. ALSC_Dataset()创建了数据集类
+
+#### Question2
+将text和aspect处理为json格式的数据
+#### Answer2
+已解决
+#### Question3
+使model正常运行
+#### Answer3
+保证各项参数都定义了
+
+#### Question4
+GPU训练的模型如何用cpu跑起来
+#### Solution4
+类似这样torch.load(os.path.join(self.ckptdir,'best_ckpt.pt'),map_location=torch.device(device))，加一个map_location参数

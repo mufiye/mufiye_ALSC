@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import numpy as np
 import argparse
 import logging
+from load_data import get_rolled_and_unrolled_data, load_and_cache_vocabs_vectors
 from models.model import (Aspect_Text_GAT_ours,
                     Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
 
@@ -42,11 +43,20 @@ class Inferer:
     def __init__(self, opt):
         self.opt = opt
         # 根据model class以及opt参数设置model
-        self.model = opt.model_class(opt)
-
-        self.model.load_state_dict(torch.load(opt.state_dict_path))
-        self.model = self.model.to(opt.device)
-
+        if self.opt.modelName == 'gat_our' or self.opt.modelName == 'gat_only':
+            self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
+            embedding = torch.from_numpy(np.asarray(self.word_vecs, dtype=np.float32))
+            self.opt.glove_embedding = embedding
+            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'], self.pos_tag_vocab['len'])
+            self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
+            self.model = self.model.to(self.opt.device)
+        elif self.opt.modelName == 'gat_bert':
+            self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
+            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'], self.pos_tag_vocab['len'])
+            self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
+            self.model = self.model.to(self.opt.device)
+        else: #pure_bert case
+            self.model = self.opt.model_class(self.opt)
         # switch model to evaluation mode
         self.model.eval()
         torch.autograd.set_grad_enabled(False)
@@ -61,7 +71,7 @@ class Inferer:
         sentence_info = {}
         sentence_info['sentence'] = text
         sentence_info['aspect_sentiment'] = []
-        sentence_info['token'] = []
+        sentence_info['tokens'] = []
         sentence_info['tags'] = []
         sentence_info['predicted_dependencies'] = []
         sentence_info['dependencies'] = []
@@ -78,7 +88,7 @@ class Inferer:
             sentence_info['from_to'] = []
             sentence_info['from_to'].append([start,end])
         for token in doc:
-            sentence_info['token'].append(token.text)
+            sentence_info['tokens'].append(token.text)
             sentence_info['tags'].append(token.tag_)
             sentence_info['predicted_dependencies'].append(token.dep_.lower())
             if token.dep_.lower() == 'root':
@@ -89,13 +99,19 @@ class Inferer:
                 sentence_info['dependencies'].append([token.dep_.lower(),token.head.i+1,token.i+1])
             
         json_data.append(sentence_info)
-
+        #####################################
         # 测试代码1：写入到文件中看看
-        '''
-        with open('infer_json_data.json', 'w') as f:
-            json.dump(json_data, f)
-        print('done', len(json_data))
-        '''
+        # with open('infer_json_data.json', 'w') as f:
+        #     json.dump(json_data, f)
+        # print('done', len(json_data))
+        #####################################
+
+        # 2. 将json样式的数据转换为model的输入数据的样式(按流程照搬照抄就行)
+        # 不需要load_data中的get_dataset()
+        _, unrolled_data, _, _ = get_rolled_and_unrolled_data(json_data, self.opt)
+        if self.opt.embedding_type == 'glove':
+            
+        elif self.opt.embedding_type == 'bert':
         return
 
 
@@ -141,12 +157,12 @@ def main():
     # 待补全: Option对象, 待补全
     class Option(object): pass
     opt=Option()
-    
+    opt.inInfer = True
     if args.gat_our:
         # about model parameters
         opt.modelName = 'gat_our'
         opt.model_class = model_classes['gat_our']
-        opt.state_dict_path = 'saved_models\state_dict\best_model\gat_our_twitter_acc_0.7038_f1_0.6977'
+        opt.state_dict_path = 'saved_models/state_dict/best_model/gat_our_twitter_acc_0.7038_f1_0.6977'
         opt.highway = True
         opt.num_layers = 2
         opt.num_heads = 9
@@ -159,7 +175,8 @@ def main():
         opt.final_hidden_size = 400
         opt.num_mlps = 1
         opt.gat_attention_type = 'dotprod'
-
+        opt.dropout = 0.6
+        opt.num_classes = 3
         # about dataset parameters
         opt.dataset_name = 'twitter'
         opt.glove_dir = './datasets/Glove'
@@ -170,7 +187,7 @@ def main():
         # about model parameters
         opt.modelName = 'gat_bert'
         opt.model_class = model_classes['gat_bert']
-        opt.state_dict_path = 'saved_models\state_dict\best_model\gat_bert_twitter_acc_0.7645_f1_0.7506'
+        opt.state_dict_path = 'saved_models/state_dict/best_model/gat_bert_twitter_acc_0.7645_f1_0.7506'
         opt.highway = False
         opt.num_layers = 2
         opt.num_heads = 6
@@ -183,6 +200,8 @@ def main():
         opt.num_mlps = 2
         opt.gat_attention_type = 'dotprod'
         opt.bert_model_dir = 'models/bert_base'
+        opt.dropout = 0.2
+        opt.num_classes = 3
         # about dataset parameters
         opt.dataset_name = 'twitter'
         opt.add_non_connect = True
@@ -201,11 +220,12 @@ def main():
     opt.device = device
     logger.info('Device is %s', opt.device)
 
-    inf = Inferer(opt)
     # 测试代码1：测试语法解析是否正确
     # inf.evaluate('Two wasted steaks -- what a crime!', 'steaks')
+
+    inf = Inferer(opt)
     t_probs = inf.evaluate('the service is terrible', 'service')
-    print(t_probs.argmax(axis=-1) - 1)
+    # print(t_probs.argmax(axis=-1) - 1)
 
 if __name__ == '__main__':
     main()
