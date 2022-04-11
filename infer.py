@@ -16,6 +16,8 @@ import logging
 from load_data import get_rolled_and_unrolled_data, load_and_cache_vocabs_vectors
 from models.model import (Aspect_Text_GAT_ours,
                     Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
+from transformers import (BertConfig, BertForTokenClassification,
+                                  BertTokenizer)
 
 import json
 import spacy
@@ -55,6 +57,8 @@ class Inferer:
             self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'], self.pos_tag_vocab['len'])
             self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
             self.model = self.model.to(self.opt.device)
+            tokenizer = BertTokenizer.from_pretrained(opt.bert_model_dir)
+            self.opt.tokenizer = tokenizer
         else: #pure_bert case
             self.model = self.opt.model_class(self.opt)
         # switch model to evaluation mode
@@ -106,14 +110,122 @@ class Inferer:
         # print('done', len(json_data))
         #####################################
 
-        # 2. 将json样式的数据转换为model的输入数据的样式(按流程照搬照抄就行)
+        # 2. 将json样式的数据转换为model的输入数据的样式(参考load_data)
         # 不需要load_data中的get_dataset()
+        # 下面主要的是convert_feature()函数
         _, unrolled_data, _, _ = get_rolled_and_unrolled_data(json_data, self.opt)
+        #####################################
+        # 测试代码2：打印显示unrolled_data
+        # print(unrolled_data)
+        # print(type(unrolled_data))
+        #####################################
+        unrolled_data = unrolled_data[0]
         if self.opt.embedding_type == 'glove':
-            
+            unrolled_data['sentence_ids'] = [self.word_vocab['stoi'][w]
+                                                for w in unrolled_data['sentence']]
+            unrolled_data['aspect_ids'] = [self.word_vocab['stoi'][w]
+                                              for w in unrolled_data['aspect']]
         elif self.opt.embedding_type == 'bert':
-        return
+            cls_token = "[CLS]"
+            sep_token = "[SEP]"
+            pad_token = 0
+            tokens = []
+            word_indexer = []
+            aspect_tokens = []
+            aspect_indexer = []
+            for word in unrolled_data['sentence']:
+                word_tokens = self.opt.tokenizer.tokenize(word)
+                token_idx = len(tokens)
+                tokens.extend(word_tokens)
+                word_indexer.append(token_idx)
+            for word in unrolled_data['aspect']:
+                word_aspect_tokens = self.opt.tokenizer.tokenize(word)
+                token_idx = len(aspect_tokens)
+                aspect_tokens.extend(word_aspect_tokens)
+                aspect_indexer.append(token_idx)
+            tokens = [cls_token] + tokens + [sep_token]
+            aspect_tokens = [cls_token] + aspect_tokens + [sep_token]
+            word_indexer = [i+1 for i in word_indexer]
+            aspect_indexer = [i+1 for i in aspect_indexer]
+            input_ids = self.opt.tokenizer.convert_tokens_to_ids(tokens)
+            input_aspect_ids = self.opt.tokenizer.convert_tokens_to_ids(aspect_tokens)
+            assert len(word_indexer) == len(unrolled_data['sentence'])
+            assert len(aspect_indexer) == len(unrolled_data['aspect'])
+            
+            input_cat_ids = input_ids + input_aspect_ids[1:]
+            segment_ids = [0] * len(input_ids) + [1] * len(input_aspect_ids[1:])
 
+            unrolled_data['input_cat_ids'] = input_cat_ids
+            unrolled_data['segment_ids'] = segment_ids
+            unrolled_data['input_ids'] = input_ids
+            unrolled_data['word_indexer'] = word_indexer
+            unrolled_data['input_aspect_ids'] = input_aspect_ids
+            unrolled_data['aspect_indexer'] = aspect_indexer
+        # 共用的convert_feature部分
+        unrolled_data['text_len'] = len(unrolled_data['sentence'])
+        unrolled_data['aspect_position'] = [0] * unrolled_data['text_len']
+        try:  # find the index of aspect in sentence
+            for j in range(unrolled_data['from'], unrolled_data['to']):
+                unrolled_data['aspect_position'][j] = 1
+        except:
+            for term in unrolled_data['aspect']:
+                unrolled_data['aspect_position'][unrolled_data['sentence'].index(term)] = 1
+        unrolled_data['dep_tag_ids'] = [self.dep_tag_vocab['stoi'][w]
+                                           for w in unrolled_data['dep_tag']]
+        unrolled_data['dep_dir_ids'] = [idx for idx in unrolled_data['dep_dir']]
+        unrolled_data['pos_class'] = [self.pos_tag_vocab['stoi'][w]
+                                             for w in unrolled_data['tags']]
+        unrolled_data['aspect_len'] = len(unrolled_data['aspect'])
+        unrolled_data['dep_rel_ids'] = [self.dep_tag_vocab['stoi'][r]
+                                           for r in unrolled_data['predicted_dependencies']]
+        
+        # 3.关于普通数据到tensor的转换(__getitem__函数，还有allocate函数有关系吗？)
+        items = unrolled_data['dep_tag_ids'],unrolled_data['pos_class'], unrolled_data['text_len'],\
+            unrolled_data['aspect_len'], unrolled_data['sentiment'],unrolled_data['dep_rel_ids'], \
+            unrolled_data['predicted_heads'], unrolled_data['aspect_position'], unrolled_data['dep_dir_ids']
+        if self.opt.embedding_type == 'glove':
+            non_bert_items = unrolled_data['sentence_ids'], unrolled_data['aspect_ids']
+            items_tensor = non_bert_items + items
+            items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in items_tensor)
+        else:
+            if self.opt.modelName == 'bert_gat':
+                bert_items = unrolled_data['input_ids'], unrolled_data['word_indexer'], unrolled_data['input_aspect_ids'], unrolled_data['aspect_indexer'], unrolled_data['input_cat_ids'], unrolled_data['segment_ids']
+                items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in bert_items)
+                items_tensor += tuple(torch.unsqueeze(torch.tensor(t),0) for t in items)
+        #####################################
+        # 测试代码4：关于pytorch的tensor
+        #####################################
+        # 4.将数据输入模型并返回结果
+        if self.opt.embedding_type == 'glove':
+            inputs = {  'sentence': items_tensor[0],
+                        'aspect': items_tensor[1], # aspect token
+                        'dep_tags': items_tensor[2], # reshaped
+                        'pos_class': items_tensor[3],
+                        'text_len': items_tensor[4],
+                        'aspect_len': items_tensor[5],
+                        'dep_rels': items_tensor[7], # adj no-reshape
+                        'dep_heads': items_tensor[8],
+                        'aspect_position': items_tensor[9],
+                        'dep_dirs': items_tensor[10]}
+        else:
+            inputs = {  'input_ids': items_tensor[0],
+                        'input_aspect_ids': items_tensor[2],
+                        'word_indexer': items_tensor[1],
+                        'aspect_indexer': items_tensor[3],
+                        'input_cat_ids': items_tensor[4],
+                        'segment_ids': items_tensor[5],
+                        'dep_tags': items_tensor[6],
+                        'pos_class': items_tensor[7],
+                        'text_len': items_tensor[8],
+                        'aspect_len': items_tensor[9],
+                        'dep_rels': items_tensor[11],
+                        'dep_heads': items_tensor[12],
+                        'aspect_position': items_tensor[13],
+                        'dep_dirs': items_tensor[14]}
+        t_outputs = self.model(**inputs)
+        t_probs = F.softmax(t_outputs, dim=-1).cpu().numpy()
+
+        return t_probs
 
 # parser是为了区分不同的模型，以及是否使用cuda
 def parse_args():
@@ -224,8 +336,27 @@ def main():
     # inf.evaluate('Two wasted steaks -- what a crime!', 'steaks')
 
     inf = Inferer(opt)
-    t_probs = inf.evaluate('the service is terrible', 'service')
-    # print(t_probs.argmax(axis=-1) - 1)
+    # {'negative': 0, 'positive': 1, 'neutral': 2}
+    # 第一组测试：正确答案为negative
+    # t_probs = inf.evaluate('the service is terrible', 'service')
+    # print(t_probs.argmax(axis=-1))
+
+    # 第二组测试：正确答案为negative（有过一个报错，注意单引号和双引号）
+    # t_probs = inf.evaluate("It sounds like there may be a replacement for charlie sheen on '' Two and a Half Men . '' What do you think ? .", "charlie sheen")
+    # print(t_probs.argmax(axis=-1))
+
+    # 第三组测试：正确答案为neural
+    # t_probs = inf.evaluate("wtf ? hilary swank is coming to my school today , just to chill . lol wow", "hilary swank")
+    # print(t_probs.argmax(axis=-1))
+
+    # 第四组测试：正确答案为positive
+    # t_probs = inf.evaluate("ok love game is on . . lady gaga , my dear , you need new music ; -RRB-", "lady gaga")
+    # print(t_probs.argmax(axis=-1))
+
+    # 第五组测试：正确答案为positive
+    t_probs = inf.evaluate("i upload a youtube video -- i love britney spears !", "britney spears")
+    print(t_probs.argmax(axis=-1))
+
 
 if __name__ == '__main__':
     main()

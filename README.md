@@ -146,3 +146,7 @@ Resource punkt not found. Please use the NLTK Downloader to obtain the resource:
 GPU训练的模型如何用cpu跑起来
 #### Solution4
 类似这样torch.load(os.path.join(self.ckptdir,'best_ckpt.pt'),map_location=torch.device(device))，加一个map_location参数
+
+#### Question5
+模型需要的是三维的input，但是我不进行填充只是二维的数据，如何将数据变为三维的？
+#### Solution5
