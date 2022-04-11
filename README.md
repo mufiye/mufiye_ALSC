@@ -100,14 +100,17 @@ collate_fn函数决定batch构成
 4. 规范化改写代码、远端模型训练流程
 ### 2022.4.8
 1. 写infer.py
+
+### 2022.4.10
+1. 写infer.py
+
+### 2022.4.11
+1. 完成infer.py
+2. 构建Django网站后端
 ### 其它待办
-1. 完善整体框架1（model package 3个python file）
-2. 存储dependency tree reshape后的结果
-3. 完善整体框架2（infer.py）（前提是仔细阅读与加深对代码的理解）
-4. 尝试自己的重构dependency tree的方式（前提条件是充分理解model和dataset构成）
-5. 尝试可视化树形结构（以及思考如何在网页中可视化树形结构）（关于echart）
-6. 构建Django网站后端
-7. 构建网页前端（使用bootstrap）
+1. 尝试自己的重构dependency tree的方式（前提条件是充分理解model和dataset构成）
+2. 尝试可视化树形结构（以及思考如何在网页中可视化树形结构）（关于echart）
+3. 构建网页前端（使用bootstrap）
 
 ## 遇到的问题以及解决方案
 ### NLTK(2022.4.5)
@@ -123,7 +126,7 @@ Resource punkt not found. Please use the NLTK Downloader to obtain the resource:
 #### Solution
 在本地端更改代码(注意不要把大的文件commit)，在训练端git clone，要写好每个脚本，尽可能下载state_dict
 
-### 关于编写infer.py函数(2022.4.10)
+### 关于编写infer.py函数(2022.4.10/11)
 #### Question1
 数据集的处理流程（在load_data.py和train.py文件中）
 #### Answer1
@@ -150,3 +153,4 @@ GPU训练的模型如何用cpu跑起来
 #### Question5
 模型需要的是三维的input，但是我不进行填充只是二维的数据，如何将数据变为三维的？
 #### Solution5
+torch.unsqueeze()
