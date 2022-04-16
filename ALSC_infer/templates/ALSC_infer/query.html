@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>ALSC infer</title>
+</head>
+<body>
+    <form action="{% url 'showResult' %}" method="post">
+        {% csrf_token %}
+        Text: <input type="text" name="text"><br>
+        Aspect: <input type="text" name="aspect"><br>
+        <input type="submit" value="Submit"><br>
+    </form>
+</body>
+</html>

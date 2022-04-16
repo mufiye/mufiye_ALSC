@@ -38,6 +38,8 @@ def set_seed(args):
 def parse_args():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--inInfer', action='store_true',
+                        help='inInfer but always not')
     '''
     some parameters about data and cuda
     '''

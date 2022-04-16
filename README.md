@@ -105,12 +105,24 @@ collate_fn函数决定batch构成
 1. 写infer.py
 
 ### 2022.4.11
-1. 完成infer.py
-2. 构建Django网站后端
+1. 完成infer.py(gat_our的部分)
+
+### 2022.4.14
+1. 构建Django网站后端
+
+### 2022.4.15
+1. 构建Django网站后端(表单，reverse)
+2. infer.py关于gat_bert的部分
+
+### 2022.4.16
+only: 优化算法(提出自己的模型，争取性能上有所提升)
+
 ### 其它待办
-1. 尝试自己的重构dependency tree的方式（前提条件是充分理解model和dataset构成）
-2. 尝试可视化树形结构（以及思考如何在网页中可视化树形结构）（关于echart）
-3. 构建网页前端（使用bootstrap）
+1. 使用更加精准的训练数据集(使用更高准确度的语法解析工具)
+2. 构建网页前端(优化前端页面)(使用bootstrap)
+3. 可视化语法解析得到的树(使用echart)
+4. 使用更加精准的语法解析工具(比如LAL-parser)来做infer
+5. 深入学习django后端框架，理解并且能够熟练使用它
 
 ## 遇到的问题以及解决方案
 ### NLTK(2022.4.5)
@@ -154,3 +166,12 @@ GPU训练的模型如何用cpu跑起来
 模型需要的是三维的input，但是我不进行填充只是二维的数据，如何将数据变为三维的？
 #### Solution5
 torch.unsqueeze()
+### 关于使用django框架构建一个展示系统
+#### Qustion1
+无法加载template
+#### Solution1
+在settings.py文件中修改INSTALLED_APPS项
+
+### 关于算法的优化
+#### idea1
+不简化树，使用原始的树结构，也是多加一个关于dependency关系的gat attention part

@@ -188,7 +188,7 @@ class Inferer:
             items_tensor = non_bert_items + items
             items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in items_tensor)
         else:
-            if self.opt.modelName == 'bert_gat':
+            if self.opt.modelName == 'gat_bert':
                 bert_items = unrolled_data['input_ids'], unrolled_data['word_indexer'], unrolled_data['input_aspect_ids'], unrolled_data['aspect_indexer'], unrolled_data['input_cat_ids'], unrolled_data['segment_ids']
                 items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in bert_items)
                 items_tensor += tuple(torch.unsqueeze(torch.tensor(t),0) for t in items)
@@ -250,13 +250,20 @@ def check_args(args):
 refer from https://github.com/songyouwei/ABSA-PyTorch/blob/master/infer_example.py
 '''
 
-def main():
+def infering(text, aspect):
     # setup logging
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
-    args = parse_args()
-    check_args(args)
+    # for no args
+    # args = parse_args()
+
+    class Option(object): pass
+    args = Option()
+    args.if_cuda = False
+    args.gat_our = False
+    args.gat_bert = True
+    args.pure_bert = False
 
     # 已补全: model_classes, 指模型名称及其对应的class
     model_classes = {
@@ -266,8 +273,7 @@ def main():
         'gat_only': Aspect_Text_GAT_only,
     }
 
-    # 待补全: Option对象, 待补全
-    class Option(object): pass
+    # 已补全: Option对象
     opt=Option()
     opt.inInfer = True
     if args.gat_our:
@@ -354,10 +360,13 @@ def main():
     # print(t_probs.argmax(axis=-1))
 
     # 第五组测试：正确答案为positive
-    t_probs = inf.evaluate("i upload a youtube video -- i love britney spears !", "britney spears")
-    print(t_probs.argmax(axis=-1))
+    t_probs = inf.evaluate(text, aspect)
+    return t_probs.argmax(axis=-1).item()
 
 
 if __name__ == '__main__':
-    main()
+    text = "wtf ? hilary swank is coming to my school today , just to chill . lol wow"
+    aspect = "hilary swank"
+    result = infering(text, aspect)
+    print(result)
 
