@@ -34,8 +34,8 @@ class No_Reshaped_GAT_ours(nn.Module):
         gcn_input_dim = args.hidden_size * 2
 
         # the changed place
-        self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers)
-        self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers)
+        self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
+        self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
         self.aspect_attention = LinearAttention(in_dim = gcn_input_dim, mem_dim = gcn_input_dim).to(args.device)
 
         # the last mlp part
