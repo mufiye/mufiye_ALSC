@@ -115,8 +115,14 @@ collate_fn函数决定batch构成
 2. infer.py关于gat_bert的部分
 
 ### 2022.4.16
-only: 优化算法(提出自己的模型，争取性能上有所提升)
-
+* only: 优化算法(提出自己的模型，争取性能上有所提升)
+   1. model_gcn.py: GAT, Rel_GAT, 并寻找其它GAT model
+   2. 组织正确的数据形式(in load_data.py, or maybe in new_load_data.py)
+   3. 编写出new_model.py中的普通模型类和BERT模型类
+### 2022.4.17
+* only: 优化算法(提出自己的模型，争取性能上有所提升)
+   1. 搞懂model_gcn.py中的GAT和rel_GAT
+   2. 让模型跑起来，并且调参使性能变优
 ### 其它待办
 1. 使用更加精准的训练数据集(使用更高准确度的语法解析工具)
 2. 构建网页前端(优化前端页面)(使用bootstrap)
@@ -175,3 +181,8 @@ torch.unsqueeze()
 ### 关于算法的优化
 #### idea1
 不简化树，使用原始的树结构，也是多加一个关于dependency关系的gat attention part
+#### Question1
+1. Rel_GAT中：
+   * dep_rel_num
+   * adj
+   * rel_adj 

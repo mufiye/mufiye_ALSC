@@ -13,7 +13,7 @@ class Rel_GAT(nn.Module):
     Relation gat model, use the embedding of the edges to predict attention weight
     """
 
-    def __init__(self, args, dep_rel_num,  hidden_size=64,  num_layers=2):
+    def __init__(self, args, dep_rel_num,  hidden_size=64,  num_layers=3):
         super(Rel_GAT, self).__init__()
         self.args = args
         self.num_layers = num_layers
@@ -38,27 +38,30 @@ class Rel_GAT(nn.Module):
         B, N = adj.size(0), adj.size(1)
 
         rel_adj_V = self.dep_rel_embed(
-            rel_adj.view(B, -1))  # (batch_size, n*n, d)
+            rel_adj.view(B, -1))  # (batch_size, L*L, d)
 
         # gcn layer
         for l in range(self.num_layers):
             # relation based GAT, attention over relations
             
             if True:
-                rel_adj_logits = self.fcs(rel_adj_V).squeeze(2)  # (batch_size, n*n)
+                rel_adj_logits = self.fcs(rel_adj_V).squeeze(2)  # (batch_size, L*L)
             else:
-                rel_adj_logits = self.A[l](rel_adj_V).squeeze(2)  # (batch_size, n*n)
+                rel_adj_logits = self.A[l](rel_adj_V).squeeze(2)  # (batch_size, L*L)
 
-            dmask = adj.view(B, -1)  # (batch_size, n*n)
+            dmask = adj.view(B, -1)  # (batch_size, L*L)
             rel_adj_logits = F.softmax(
                 mask_logits(rel_adj_logits, dmask), dim=1)
             rel_adj_logits = rel_adj_logits.view(
-                *rel_adj.size())  # (batch_size, n, n)
+                *rel_adj.size())  # (batch_size, L, L)
 
-            Ax = rel_adj_logits.bmm(feature)
-            feature = self.dropout(Ax) if l < self.num_layers - 1 else Ax
+            if l == 0:
+                Ax = rel_adj_logits.bmm(feature) # (batch_size, L, D)
+            else:
+                Ax = rel_adj_logits.bmm(Ax) # (batch_size, L, D)
+            Ax = self.dropout(Ax) if l < self.num_layers - 1 else Ax
 
-        return feature
+        return Ax
 
 
 class GAT(nn.Module):
@@ -66,7 +69,7 @@ class GAT(nn.Module):
     GAT module operated on graphs
     """
 
-    def __init__(self, args, in_dim, hidden_size=64, mem_dim=300, num_layers=2):
+    def __init__(self, args, in_dim, hidden_size=64, mem_dim=300, num_layers=3):
         super(GAT, self).__init__()
         self.args = args
         self.num_layers = num_layers
@@ -88,24 +91,29 @@ class GAT(nn.Module):
 
     def forward(self, adj,  feature):
         B, N = adj.size(0), adj.size(1)
-        dmask = adj.view(B, -1)  # (batch_size, n*n)
+        dmask = adj.view(B, -1)  # (batch_size, L*L)
         # gcn layer
         for l in range(self.num_layers):
             # Standard GAT:attention over feature
             #####################################
-            h = self.W[l](feature) # (B, N, D)
+            if l == 0:
+                h = self.W[l](feature) #(B, L, D) D=men_dim
+            else:
+                h = self.W[l](h) #(B, L, D) D=men_dim
             a_input = torch.cat([h.repeat(1, 1, N).view(
-                B, N*N, -1), h.repeat(1, N, 1)], dim=2)  # (B, N*N, 2*D)
-            e = self.leakyrelu(self.afcs(a_input)).squeeze(2)  # (B, N*N)
+                B, N*N, -1), h.repeat(1, N, 1)], dim=2)  # (B, L*L, 2*D)
+            # print("the {} time a_input's shape is {}".format(l,a_input.shape))
+            e = self.leakyrelu(self.afcs(a_input)).squeeze(2)  # (B, L*L)
             attention = F.softmax(mask_logits(e, dmask), dim=1)
-            attention = attention.view(*adj.size())
+            attention = attention.view(*adj.size())  # (B, L, L)
 
             # original gat
-            feature = attention.bmm(h)
-            feature = self.dropout(feature) if l < self.num_layers - 1 else feature
+            h = attention.bmm(h)  # (B, L, D)
+            # print("the {} time after attention h's shape is {}".format(l,h.shape))
+            h = self.dropout(h) if l < self.num_layers - 1 else h
             #####################################
 
-        return feature
+        return h
 
 
 class GCN(nn.Module):

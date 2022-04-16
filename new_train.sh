@@ -1,0 +1,1 @@
+python train.py --if_cuda --gat_noReshape_our --dataset_name twitter --highway --per_gpu_train_batch_size 8 --dropout 0.6 --num_mlps 1 --final_hidden_size 400

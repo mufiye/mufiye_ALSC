@@ -19,11 +19,14 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import (BertConfig, BertForTokenClassification,
                                   BertTokenizer)
-
-from load_data import load_datasets_and_vocabs
 from models.model import (Aspect_Text_GAT_ours,
                     Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
 from trainer import train
+
+# changed
+from new_load_data import load_datasets_and_vocabs
+from models.new_model import *
+
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +95,7 @@ def parse_args():
                         help='Number of heads for gat.')
     parser.add_argument('--dropout', type=float, default=0,
                         help='Dropout rate for embedding.')
-    parser.add_argument('--num_gcn_layers', type=int, default=1,
+    parser.add_argument('--num_gcn_layers', type=int, default=3,
                         help='Number of GCN layers.')
     parser.add_argument('--gcn_mem_dim', type=int, default=300,
                         help='Dimension of the W in GCN.')
@@ -118,7 +121,11 @@ def parse_args():
     parser.add_argument('--gat_attention_type', type = str, choices=['linear','dotprod','gcn'], default='dotprod',
                         help='The attention used for gat')
 
-
+    # new parameter about model
+    parser.add_argument('--gat_noReshape_our', action='store_true',
+                        help='gat_noReshape_our')
+    parser.add_argument('--gat_noReshape_bert', action='store_true',
+                        help='gat_noReshape_bert')
 
     '''
     training parameters
@@ -179,15 +186,16 @@ def main():
     # Load dataset: about dataset load python file
     train_dataset, test_dataset, word_vocab, dep_tag_vocab, pos_tag_vocab = load_datasets_and_vocabs(args)
     # Build Model: about model package
-    if args.pure_bert:
-        model = Pure_Bert(args)
-    elif args.gat_bert:
-        model = Aspect_Bert_GAT(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # R-GAT + Bert
-    elif args.gat_our:
-        model = Aspect_Text_GAT_ours(args, dep_tag_vocab['len'], pos_tag_vocab['len']) # R-GAT with reshaped tree
-    else:
-        model = Aspect_Text_GAT_only(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # original GAT with reshaped tree
+    # if args.pure_bert:
+    #     model = Pure_Bert(args)
+    # elif args.gat_bert:
+    #     model = Aspect_Bert_GAT(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # R-GAT + Bert
+    # elif args.gat_our:
+    #     model = Aspect_Text_GAT_ours(args, dep_tag_vocab['len'], pos_tag_vocab['len']) # R-GAT with reshaped tree
+    # else:
+    #     model = Aspect_Text_GAT_only(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # original GAT with reshaped tree
 
+    model = No_Reshaped_GAT_ours(args, dep_tag_vocab['len'])
     model.to(args.device)
 
     # Train: about trainer python file

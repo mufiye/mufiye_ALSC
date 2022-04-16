@@ -21,7 +21,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
-from load_data import my_collate, my_collate_pure_bert, my_collate_bert
+# changed
+from new_load_data import my_collate, my_collate_pure_bert, my_collate_bert
 from transformers import AdamW
 from transformers import BertTokenizer
 
@@ -41,14 +42,12 @@ def get_input_from_batch(args, batch):
     if embedding_type == 'glove':
         inputs = {  'sentence': batch[0],
                     'aspect': batch[1], # aspect token
-                    'dep_tags': batch[2], # reshaped
+                    'dep_tags': batch[2], # no reshaped
                     'pos_class': batch[3],
                     'text_len': batch[4],
                     'aspect_len': batch[5],
-                    'dep_rels': batch[7], # adj no-reshape
-                    'dep_heads': batch[8],
-                    'aspect_position': batch[9],
-                    'dep_dirs': batch[10]
+                    'dep_heads': batch[7],
+                    'aspect_position': batch[8]
                     }
         labels = batch[6]
     else: # bert
@@ -68,10 +67,9 @@ def get_input_from_batch(args, batch):
                         'pos_class': batch[7],
                         'text_len': batch[8],
                         'aspect_len': batch[9],
-                        'dep_rels': batch[11],
-                        'dep_heads': batch[12],
-                        'aspect_position': batch[13],
-                        'dep_dirs': batch[14]}
+                        'dep_heads': batch[11],
+                        'aspect_position': batch[12]
+                        }
             labels = batch[10]
     return inputs, labels
 
@@ -195,31 +193,20 @@ def train(args, train_dataset, model, test_dataset):
                     if results['acc'] > max_test_acc:
                         max_test_acc = results['acc']
                         best_model = copy.deepcopy(model)
-                        if args.pure_bert:
-                            model_path = './saved_models/state_dict/best_model/pure_bert_{}_acc_{:.4f}_f1_{:.4f}' \
-                                            .format(args.dataset_name, results['acc'], results['f1'])
-                        elif args.gat_bert:
-                            model_path = './saved_models/state_dict/best_model/gat_bert_{}_acc_{:.4f}_f1_{:.4f}' \
-                                            .format(args.dataset_name, results['acc'], results['f1'])
-                        elif args.gat_our:
-                            model_path = './saved_models/state_dict/best_model/gat_our_{}_acc_{:.4f}_f1_{:.4f}' \
+                        if args.gat_noReshape_our:
+                            model_path = './saved_models/state_dict/best_model/gat_noReshape_our_{}_acc_{:.4f}_f1_{:.4f}' \
                                             .format(args.dataset_name, results['acc'], results['f1'])
                         else:
-                            model_path = './saved_models/state_dict/best_model/gat_only_{}_acc_{:.4f}_f1_{:.4f}' \
+                            model_path = './saved_models/state_dict/best_model/gat_noReshape_bert_{}_acc_{:.4f}_f1_{:.4f}' \
                                             .format(args.dataset_name, results['acc'], results['f1'])
+                        
         # check point
         if (train_epoch+1) % 5 == 0:
-            if args.pure_bert:
-                checkpoint_model_path = './saved_models/state_dict/checkPoint/pure_bert_{}_checkPoint_{}' \
-                                .format(args.dataset_name, train_epoch+1)
-            elif args.gat_bert:
-                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_bert_{}_checkPoint_{}' \
-                                .format(args.dataset_name, train_epoch+1)
-            elif args.gat_our:
-                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_our_{}_checkPoint_{}' \
+            if args.gat_noReshape_our:
+                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noReshape_our_{}_checkPoint_{}' \
                                 .format(args.dataset_name, train_epoch+1)
             else:
-                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_only_{}_checkPoint_{}' \
+                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noReshape_bert_{}_checkPoint_{}' \
                                 .format(args.dataset_name, train_epoch+1)
             if not os.path.exists('./saved_models/state_dict'):
                 os.mkdir('./saved_models/state_dict')
@@ -275,14 +262,10 @@ def evaluate(args, eval_dataset, model):
     result = compute_metrics(preds, out_label_ids)
     results.update(result)
 
-    if args.pure_bert:
-        eval_results_fileName = 'eval_results_pure_bert_{}.txt'.format(args.dataset_name)
-    elif args.gat_bert:
-        eval_results_fileName = 'eval_results_gat_bert_{}.txt'.format(args.dataset_name)
-    elif args.gat_our:
-        eval_results_fileName = 'eval_results_gat_our_{}.txt'.format(args.dataset_name)
+    if args.gat_noReshape_our:
+        eval_results_fileName = 'eval_results_gat_noReshape_our_{}.txt'.format(args.dataset_name)
     else:
-        eval_results_fileName = 'eval_results_gat_only_{}.txt'.format(args.dataset_name)
+        eval_results_fileName = 'eval_results_gat_noReshape_bert_{}.txt'.format(args.dataset_name)
     output_eval_file = os.path.join('./saved_models', eval_results_fileName)
     with open(output_eval_file, 'a+') as writer:
         logger.info('***** Eval results *****')
