@@ -81,6 +81,8 @@ class No_Reshaped_GAT_ours(nn.Module):
         #########################################################
         # do thing about gat, the part changed
         adj, rel_adj = inputs_to_deprel_adj(self.args, dep_heads, dep_tags, text_len)
+        adj = adj.to(self.args.device)
+        rel_adj = rel_adj.to(self.args.device)
 
         #########################################################
         # 目前的想法是将gat经过gcn与aspect attention机制的feature与
