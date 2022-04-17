@@ -36,7 +36,7 @@ class No_Reshaped_GAT_ours(nn.Module):
         # the changed place
         self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
         self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
-        self.aspect_attention = LinearAttention(in_dim = gcn_input_dim, mem_dim = gcn_input_dim).to(args.device)
+        # self.aspect_attention = DotprodAttention().to(args.device)
 
         # the last mlp part
         last_hidden_size = args.hidden_size * 4
@@ -62,21 +62,19 @@ class No_Reshaped_GAT_ours(nn.Module):
         '''
         fmask = (torch.zeros_like(sentence) != sentence).float()  # (N，L)
         feature = self.embed(sentence)  # (N, L, D)
-        aspect_feature = self.embed(aspect) # (N, L', D)
+        # aspect_feature = self.embed(aspect) # (N, L', D)
 
-        feature = self.embed(sentence)  # (N, L, D)
-        aspect_feature = self.embed(aspect) # (N, L', D)
         feature = self.dropout(feature)
-        aspect_feature = self.dropout(aspect_feature)
+        # aspect_feature = self.dropout(aspect_feature)
 
         if self.args.highway:
             feature = self.highway(feature)
-            aspect_feature = self.highway(aspect_feature)
+            # aspect_feature = self.highway(aspect_feature)
 
         feature, _ = self.bilstm(feature) # (N,L,D)
-        aspect_feature, _ = self.bilstm(aspect_feature) #(N,L,D)
+        # aspect_feature, _ = self.bilstm(aspect_feature) #(N,L,D)
 
-        aspect_feature = aspect_feature.mean(dim = 1) #(N,D)
+        # aspect_feature = aspect_feature.mean(dim = 1) #(N,D)
 
         #########################################################
         # do thing about gat, the part changed
@@ -89,15 +87,18 @@ class No_Reshaped_GAT_ours(nn.Module):
         # rel_gat的feature进行拼接
         # 待验证正确性、可行性和精确度
         #########################################################
-        # print("the first feature's shape is {}".format(feature.shape))
-        feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
-        # print("the first feature_dep's shape is {}".format(feature_dep.shape))
-        feature_dep = self.aspect_attention(feature_dep, aspect_feature, fmask) #(N, D)
+        asp_wn = aspect_position.sum(dim=1).unsqueeze(-1) #(N,L)
 
-        # print("the second feature's shape is {}".format(feature.shape))
+        feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
+        mask_dep = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
+        feature_dep = (feature_dep*mask_dep).sum(dim=1) / asp_wn #(N,1,D)
+        print("feature_dep's shape is {}".format(feature_dep.shape))
+
         feature_word = self.gat(adj, feature)  #(N, L, D)
-        # print("the first feature_word's shape is {}".format(feature_word.shape))
-        feature_word = self.aspect_attention(feature_word, aspect_feature, fmask) #(N, D)
+        mask_word = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
+        feature_word = (feature_word*mask_word).sum(dim=1) / asp_wn #(N,1,D)
+        print("feature_word's shape is {}".format(feature_word.shape))
+        
         #########################################################
         # maybe cat is useful before final mlp part
         feature_out = torch.cat([feature_word, feature_dep], dim = 1) #(N, D') D'=2D
@@ -105,6 +106,7 @@ class No_Reshaped_GAT_ours(nn.Module):
         x = self.fcs(x)
         logit = self.fc_final(x)
         return logit
+
 
 # the bert base model
 # class No_Reshaped_GAT_Bert(nn.Module):

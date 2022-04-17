@@ -7,7 +7,7 @@ import torch.nn.functional as F
 def mask_logits(target, mask):
     return target * mask + (1 - mask) * (-1e30)
 
-# 创新点：更改模型使其拥有更强大的性能？比如说增加一个head
+# dependency relation有关的attention在feature上做操作
 class Rel_GAT(nn.Module):
     """ 
     Relation gat model, use the embedding of the edges to predict attention weight
@@ -90,7 +90,7 @@ class GAT(nn.Module):
             self.W.append(nn.Linear(input_dim, mem_dim))
 
     def forward(self, adj,  feature):
-        B, N = adj.size(0), adj.size(1)
+        B, L = adj.size(0), adj.size(1)
         dmask = adj.view(B, -1)  # (batch_size, L*L)
         # gcn layer
         for l in range(self.num_layers):
@@ -100,8 +100,8 @@ class GAT(nn.Module):
                 h = self.W[l](feature) #(B, L, D) D=men_dim
             else:
                 h = self.W[l](h) #(B, L, D) D=men_dim
-            a_input = torch.cat([h.repeat(1, 1, N).view(
-                B, N*N, -1), h.repeat(1, N, 1)], dim=2)  # (B, L*L, 2*D)
+            a_input = torch.cat([h.repeat(1, 1, L).view(
+                B, L*L, -1), h.repeat(1, L, 1)], dim=2)  # (B, L*L, 2*D)
             # print("the {} time a_input's shape is {}".format(l,a_input.shape))
             e = self.leakyrelu(self.afcs(a_input)).squeeze(2)  # (B, L*L)
             attention = F.softmax(mask_logits(e, dmask), dim=1)
@@ -113,7 +113,7 @@ class GAT(nn.Module):
             h = self.dropout(h) if l < self.num_layers - 1 else h
             #####################################
 
-        return h
+        return h #(B,L,D) D=mem_dim
 
 
 class GCN(nn.Module):
@@ -146,7 +146,7 @@ class GCN(nn.Module):
         mask = (adj.sum(2) + adj.sum(1)).eq(0).unsqueeze(2)
 
         for l in range(self.num_layers):
-            Ax = adj.bmm(feature)
+            Ax = adj.bmm(feature) #(B,L,D) D=第一次为in_dim之后为men_dim
             AxW = self.W[l](Ax)
             AxW = AxW + self.W[l](feature)  # self loop
             AxW /= denom
@@ -154,4 +154,4 @@ class GCN(nn.Module):
             # gAxW = F.relu(AxW)
             gAxW = AxW
             feature = self.dropout(gAxW) if l < self.num_layers - 1 else gAxW
-        return feature, mask
+        return feature, mask  #feature: #(B,L,D) D=men_dim
