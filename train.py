@@ -74,8 +74,6 @@ def parse_args():
                         help='Directory storing glove embeddings')
     parser.add_argument('--bert_model_dir', type=str, default='models/bert_base',
                         help='Path to pre-trained Bert model.')
-    parser.add_argument('--pure_bert', action='store_true',
-                        help='Cat text and aspect, [cls] to predict.')
     parser.add_argument('--gat_bert', action='store_true',
                         help='Cat text and aspect, [cls] to predict.')
     parser.add_argument('--highway', action='store_true',
@@ -125,10 +123,10 @@ def parse_args():
     # new parameter about model
     parser.add_argument('--gat_noReshape_our', action='store_true',
                         help='gat_noReshape_our')
-    parser.add_argument('--pure_bert', action='store_true',
-                        help='pure_bert')
     parser.add_argument('--gat_noReshape_bert', action='store_true',
                         help='gat_noReshape_bert')
+    parser.add_argument('--pure_bert', action='store_true',
+                        help='Cat text and aspect, [cls] to predict.')
 
     '''
     training parameters
