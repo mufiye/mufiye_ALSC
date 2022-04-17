@@ -5,4 +5,4 @@ module load anaconda/2021.05
 source activate mufiye_NLP
 
 # GAT-our model and Restaurant dataset
-python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name rest --highway --dropout 0.8 --per_gpu_train_batch_size 16 --num_layers 2 --num_mlps 2 --hidden_size 300 --final_hidden_size 300
+python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name rest --highway --dropout 0.8 --per_gpu_train_batch_size 16 --num_mlps 2 --hidden_size 100 --final_hidden_size 100
