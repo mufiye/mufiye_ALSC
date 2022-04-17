@@ -19,8 +19,8 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import (BertConfig, BertForTokenClassification,
                                   BertTokenizer)
-from models.model import (Aspect_Text_GAT_ours,
-                    Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
+# from models.model import (Aspect_Text_GAT_ours,
+#                     Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
 from trainer import train
 
 # changed
@@ -125,6 +125,8 @@ def parse_args():
     # new parameter about model
     parser.add_argument('--gat_noReshape_our', action='store_true',
                         help='gat_noReshape_our')
+    parser.add_argument('--pure_bert', action='store_true',
+                        help='pure_bert')
     parser.add_argument('--gat_noReshape_bert', action='store_true',
                         help='gat_noReshape_bert')
 
@@ -195,8 +197,10 @@ def main():
     #     model = Aspect_Text_GAT_ours(args, dep_tag_vocab['len'], pos_tag_vocab['len']) # R-GAT with reshaped tree
     # else:
     #     model = Aspect_Text_GAT_only(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # original GAT with reshaped tree
-
-    model = No_Reshaped_GAT_ours(args, dep_tag_vocab['len'])
+    if args.gat_noReshape_our:
+        model = No_Reshaped_GAT_ours(args, dep_tag_vocab['len'])
+    elif args.pure_bert:
+        model = Pure_Bert(args)
     model.to(args.device)
 
     # Train: about trainer python file
