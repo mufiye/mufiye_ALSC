@@ -36,7 +36,8 @@ class No_Reshaped_GAT_ours(nn.Module):
         # the changed place
         self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
         self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
-        # self.aspect_attention = DotprodAttention().to(args.device)
+        # self.gcn = GCN(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
+        self.aspect_attention = DotprodAttention().to(args.device)
 
         # the last mlp part
         last_hidden_size = args.hidden_size * 4
@@ -62,19 +63,19 @@ class No_Reshaped_GAT_ours(nn.Module):
         '''
         fmask = (torch.zeros_like(sentence) != sentence).float()  # (N，L)
         feature = self.embed(sentence)  # (N, L, D)
-        # aspect_feature = self.embed(aspect) # (N, L', D)
+        aspect_feature = self.embed(aspect) # (N, L', D)
 
         feature = self.dropout(feature)
-        # aspect_feature = self.dropout(aspect_feature)
+        aspect_feature = self.dropout(aspect_feature)
 
         if self.args.highway:
             feature = self.highway(feature)
-            # aspect_feature = self.highway(aspect_feature)
+            aspect_feature = self.highway(aspect_feature)
 
         feature, _ = self.bilstm(feature) # (N,L,D)
-        # aspect_feature, _ = self.bilstm(aspect_feature) #(N,L,D)
+        aspect_feature, _ = self.bilstm(aspect_feature) #(N,L,D)
 
-        # aspect_feature = aspect_feature.mean(dim = 1) #(N,D)
+        aspect_feature = aspect_feature.mean(dim = 1) #(N,D)
 
         #########################################################
         # do thing about gat, the part changed
@@ -87,15 +88,17 @@ class No_Reshaped_GAT_ours(nn.Module):
         # rel_gat的feature进行拼接
         # 待验证正确性、可行性和精确度
         #########################################################
-        asp_wn = aspect_position.sum(dim=1).unsqueeze(-1) #(N,L)
+        # print("aspect position: {}".format(aspect_position))
 
         feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
+        feature_dep = self.aspect_attention(feature_dep,aspect_feature,fmask) #(N, D)
 
-        feature_word = self.gat(adj, feature_dep)  #(N, L, D)
-        mask = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
-        feature_out = (feature_word*mask).sum(dim=1) / asp_wn #(N,1,D)
+        feature_word = self.gat(adj, feature)  #(N, L, D)
+        feature_word = self.aspect_attention(feature_word,aspect_feature,fmask) #(N, D)
         
         #########################################################
+        # concat or not?
+        feature_out = torch.cat([feature_dep, feature_word], dim = 1) # (N, D')
         x = self.dropout(feature_out)
         x = self.fcs(x)
         logit = self.fc_final(x)
