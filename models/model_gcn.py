@@ -13,7 +13,7 @@ class Rel_GAT(nn.Module):
     Relation gat model, use the embedding of the edges to predict attention weight
     """
 
-    def __init__(self, args, dep_rel_num,  hidden_size=64,  num_layers=3):
+    def __init__(self, args, dep_rel_num,  hidden_size=64,  num_layers=2):
         super(Rel_GAT, self).__init__()
         self.args = args
         self.num_layers = num_layers
@@ -69,7 +69,7 @@ class GAT(nn.Module):
     GAT module operated on graphs
     """
 
-    def __init__(self, args, in_dim, hidden_size=64, mem_dim=300, num_layers=3):
+    def __init__(self, args, in_dim, hidden_size=64, mem_dim=300, num_layers=2):
         super(GAT, self).__init__()
         self.args = args
         self.num_layers = num_layers

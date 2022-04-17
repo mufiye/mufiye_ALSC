@@ -190,3 +190,6 @@ torch.unsqueeze()
    * dep_rel_num
    * adj
    * rel_adj 
+#### 关于训练设置的参数
+1. learning_rate: 0.01, 0.001
+2. gcn_num_layer: 2, 3

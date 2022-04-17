@@ -80,7 +80,7 @@ def parse_args():
                         help='Cat text and aspect, [cls] to predict.')
     parser.add_argument('--highway', action='store_true',
                         help='Use highway embed.')
-    parser.add_argument('--num_layers', type=int, default=2,
+    parser.add_argument('--num_layers', type=int, default=1,
                         help='Number of layers of bilstm or highway or elmo.')
     
     # question：这三个是什么
@@ -95,8 +95,9 @@ def parse_args():
                         help='Number of heads for gat.')
     parser.add_argument('--dropout', type=float, default=0,
                         help='Dropout rate for embedding.')
-    parser.add_argument('--num_gcn_layers', type=int, default=3,
+    parser.add_argument('--num_gcn_layers', type=int, default=2,
                         help='Number of GCN layers.')
+    # the gcn_mem_dim is temporary unuseful
     parser.add_argument('--gcn_mem_dim', type=int, default=300,
                         help='Dimension of the W in GCN.')
     parser.add_argument('--gcn_dropout', type=float, default=0.2,
@@ -106,10 +107,10 @@ def parse_args():
                         help='Dimension of glove embeddings')
     parser.add_argument('--dep_relation_embed_dim', type=int, default=300,
                         help='Dimension for dependency relation embeddings.')
-    parser.add_argument('--hidden_size', type=int, default=300,
+    parser.add_argument('--hidden_size', type=int, default=100,
                         help='Hidden size of bilstm, in early stage.')
-    parser.add_argument('--final_hidden_size', type=int, default=300,
-                        help='Hidden size of bilstm, in early stage.')
+    parser.add_argument('--final_hidden_size', type=int, default=100,
+                        help='final_hidden_size.')
     parser.add_argument('--num_mlps', type=int, default=2,
                         help='Number of mlps in the last of model.')
 
