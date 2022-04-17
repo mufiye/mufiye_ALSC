@@ -90,18 +90,12 @@ class No_Reshaped_GAT_ours(nn.Module):
         asp_wn = aspect_position.sum(dim=1).unsqueeze(-1) #(N,L)
 
         feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
-        mask_dep = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
-        feature_dep = (feature_dep*mask_dep).sum(dim=1) / asp_wn #(N,1,D)
-        print("feature_dep's shape is {}".format(feature_dep.shape))
 
-        feature_word = self.gat(adj, feature)  #(N, L, D)
-        mask_word = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
-        feature_word = (feature_word*mask_word).sum(dim=1) / asp_wn #(N,1,D)
-        print("feature_word's shape is {}".format(feature_word.shape))
+        feature_word = self.gat(adj, feature_dep)  #(N, L, D)
+        mask = aspect_position.unsqueeze(-1).repeat(1,1,self.args.hidden_size * 2) #(N,L,D)
+        feature_out = (feature_word*mask).sum(dim=1) / asp_wn #(N,1,D)
         
         #########################################################
-        # maybe cat is useful before final mlp part
-        feature_out = torch.cat([feature_word, feature_dep], dim = 1) #(N, D') D'=2D
         x = self.dropout(feature_out)
         x = self.fcs(x)
         logit = self.fc_final(x)
