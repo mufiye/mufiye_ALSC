@@ -40,7 +40,11 @@ class No_Reshaped_GAT_ours(nn.Module):
         self.aspect_attention = DotprodAttention().to(args.device)
 
         # the last mlp part
-        last_hidden_size = args.hidden_size * 4
+        # gat_nomask_concat
+        # last_hidden_size = args.hidden_size * 4
+
+        # gat_nomask_noconcat
+        last_hidden_size = args.hidden_size * 2
         layers = [
             nn.Linear(last_hidden_size, args.final_hidden_size), nn.ReLU()]
         for _ in range(args.num_mlps-1):
@@ -90,15 +94,20 @@ class No_Reshaped_GAT_ours(nn.Module):
         #########################################################
         # print("aspect position: {}".format(aspect_position))
 
-        feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
-        feature_dep = self.aspect_attention(feature_dep,aspect_feature,fmask) #(N, D)
-
-        feature_word = self.gat(adj, feature)  #(N, L, D)
-        feature_word = self.aspect_attention(feature_word,aspect_feature,fmask) #(N, D)
+        # gat_nomask_concat
+        # feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
+        # feature_dep = self.aspect_attention(feature_dep,aspect_feature,fmask) #(N, D)
+        # feature_word = self.gat(adj, feature)  #(N, L, D)
+        # feature_word = self.aspect_attention(feature_word,aspect_feature,fmask) #(N, D)
         
+        # gat_nomask_noconcat
+        feature_word = self.gat(adj, feature)  #(N, L, D)
+        feature_dep = self.rel_gat(adj, rel_adj, feature_word) #(N, L, D)
+        feature_out = self.aspect_attention(feature_dep,aspect_feature,fmask) #(N, D)
+
         #########################################################
-        # concat or not?
-        feature_out = torch.cat([feature_dep, feature_word], dim = 1) # (N, D')
+        # gat_nomask_concat
+        # feature_out = torch.cat([feature_dep, feature_word], dim = 1) # (N, D')
         x = self.dropout(feature_out)
         x = self.fcs(x)
         logit = self.fc_final(x)
