@@ -27,11 +27,11 @@ class RelationAttention(nn.Module):
         Q = Q.squeeze(2)
         Q = F.softmax(mask_logits(Q, dmask), dim=1)
 
-        Q = Q.unsqueeze(2)
-        out = torch.bmm(feature.transpose(1, 2), Q)
-        out = out.squeeze(2)
+        Q = Q.unsqueeze(2) # (N, L, 1)
+        out = torch.bmm(feature.transpose(1, 2), Q) # (N, D, L) * (N, L, 1)
+        out = out.squeeze(2) # (N, D)
         # out = F.sigmoid(out)
-        return out  # ([N, L])
+        return out  # (N, D)
 
 
 class LinearAttention(nn.Module):

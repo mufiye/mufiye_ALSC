@@ -140,18 +140,25 @@ class GCN(nn.Module):
             conv_weights += [w.weight, w.bias]
         return sum([x.pow(2).sum() for x in conv_weights])
 
+    # mask是干嘛用的？
     def forward(self, adj, feature):
         # gcn layer
         denom = adj.sum(2).unsqueeze(2) + 1
         mask = (adj.sum(2) + adj.sum(1)).eq(0).unsqueeze(2)
 
         for l in range(self.num_layers):
-            Ax = adj.bmm(feature) #(B,L,D) D=第一次为in_dim之后为men_dim
+            if l == 0:
+                Ax = adj.bmm(feature)
+            else:
+                Ax = adj.bmm(last_output)
             AxW = self.W[l](Ax)
-            AxW = AxW + self.W[l](feature)  # self loop
+            if l==0:
+                AxW = AxW + self.W[l](feature)  # self loop
+            else:
+                AxW = AxW + self.W[l](last_output)
             AxW /= denom
 
             # gAxW = F.relu(AxW)
             gAxW = AxW
-            feature = self.dropout(gAxW) if l < self.num_layers - 1 else gAxW
-        return feature, mask  #feature: #(B,L,D) D=men_dim
+            last_output = self.dropout(gAxW) if l < self.num_layers - 1 else gAxW
+        return last_output, mask
