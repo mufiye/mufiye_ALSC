@@ -328,62 +328,71 @@ class Pure_Bert(nn.Module):
 
         return logits
 
-# # the using concat model with bert 
-# class No_Reshaped_GAT_Bert(nn.Module):
-#     def __init__(self, args, dep_tag_num):
-#         super(No_Reshaped_GAT_Bert, self).__init__()
-#         self.args = args
+# the bert-based model
+class No_Reshaped_GAT_Bert(nn.Module):
+    '''
+    R-GAT with bert
+    '''
 
-#         # Bert
-#         config = BertConfig.from_pretrained(args.bert_model_dir)
-#         self.bert = BertModel.from_pretrained(
-#             args.bert_model_dir, config=config, from_tf =False)
-#         self.dropout_bert = nn.Dropout(config.hidden_dropout_prob)
-#         self.dropout = nn.Dropout(args.dropout)
-#         args.embedding_dim = config.hidden_size  # 768
+    def __init__(self, args, dep_tag_num):
+        super(No_Reshaped_GAT_Bert, self).__init__()
+        self.args = args
 
-#         if args.highway:
-#             self.highway_dep = Highway(args.num_layers, args.embedding_dim)
-#             self.highway = Highway(args.num_layers, args.embedding_dim)
-        
-#         gcn_input_dim = args.embedding_dim
+        # Bert
+        config = BertConfig.from_pretrained(args.bert_model_dir)
+        self.bert = BertModel.from_pretrained(
+            args.bert_model_dir, config=config, from_tf =False)
+        self.dropout_bert = nn.Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(args.dropout)
+        args.embedding_dim = config.hidden_size  # 768
 
-#         # about gat
+        if args.highway:
+            self.highway_dep = Highway(args.num_layers, args.embedding_dim)
+            self.highway = Highway(args.num_layers, args.embedding_dim)
 
-#         last_hidden_size = args.embedding_dim * 2
-#         layers = [
-#             nn.Linear(last_hidden_size, args.final_hidden_size), nn.ReLU()]
-#         for _ in range(args.num_mlps - 1):
-#             layers += [nn.Linear(args.final_hidden_size,
-#                                  args.final_hidden_size), nn.ReLU()]
-#         self.fcs = nn.Sequential(*layers)
-#         self.fc_final = nn.Linear(args.final_hidden_size, args.num_classes)
-    
 
-#     def forward(self, input_ids, input_aspect_ids, word_indexer, aspect_indexer,input_cat_ids,segment_ids, pos_class, dep_tags, text_len, aspect_len, dep_heads, aspect_position):
-#         fmask = (torch.ones_like(word_indexer) != word_indexer).float()  # (N，L)
-#         fmask[:,0] = 1
-#         outputs = self.bert(input_cat_ids, token_type_ids = segment_ids)
-#         feature_output = outputs[0] # (N, L, D)
-#         pool_out = outputs[1] #(N, D)
+        gcn_input_dim = args.embedding_dim
 
-#         # index select, back to original batched size.
-#         feature = torch.stack([torch.index_select(f, 0, w_i)
-#                                for f, w_i in zip(feature_output, word_indexer)])
+        # GAT
+        self.dep_gcn = GCN(self.args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
+        self.dep_attention = RelationAttention(in_dim = gcn_input_dim).to(args.device)
 
-#         # do thing about gat, the part changed
-#         adj, rel_adj = inputs_to_deprel_adj(self.args, dep_heads, dep_tags, text_len)
-#         adj = adj.to(self.args.device)
-#         rel_adj = rel_adj.to(self.args.device)
+        self.dep_embed = nn.Embedding(dep_tag_num, args.embedding_dim)
 
-#         # do gat thing
-#         feature_dep = self.rel_gat(adj, rel_adj, feature) #(N, L, D)
-#         feature_dep = self.aspect_attention(feature_dep,aspect_feature,fmask) #(N, D)
+        last_hidden_size = args.embedding_dim * 2
+        layers = [
+            nn.Linear(last_hidden_size, args.final_hidden_size), nn.ReLU()]
+        for _ in range(args.num_mlps - 1):
+            layers += [nn.Linear(args.final_hidden_size,
+                                 args.final_hidden_size), nn.ReLU()]
+        self.fcs = nn.Sequential(*layers)
+        self.fc_final = nn.Linear(args.final_hidden_size, args.num_classes)
 
-#         #########################################################
-#         # gat_nomask_concat
-#         feature_out = torch.cat([feature_dep, pool_out], dim = 1) # (N, D')
-#         x = self.dropout(feature_out)
-#         x = self.fcs(x)
-#         logit = self.fc_final(x)
-#         return logit
+    def forward(self, input_ids, input_aspect_ids, word_indexer, aspect_indexer,input_cat_ids,segment_ids, pos_class, dep_tags, text_len, aspect_len, dep_heads, aspect_position):
+        fmask = (torch.ones_like(word_indexer) != word_indexer).float()  # (N，L)
+        fmask[:,0] = 1
+        outputs = self.bert(input_cat_ids, token_type_ids = segment_ids)
+        feature_output = outputs[0] # (N, L, D)
+        pool_out = outputs[1] #(N, D)
+
+        # index select, back to original batched size.
+        feature = torch.stack([torch.index_select(f, 0, w_i)
+                               for f, w_i in zip(feature_output, word_indexer)])
+
+        ############################################################################################
+        # do gat thing
+        dep_feature = self.dep_embed(dep_tags)
+        if self.args.highway:
+            dep_feature = self.highway_dep(dep_feature)
+
+        adj = inputs_to_tree_reps(self.args, dep_heads,text_len,-1).to(self.args.device)
+        dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
+        dep_feature = self.dep_attention(feature,dep_feature,fmask)
+
+        feature_out = torch.cat([dep_feature,  pool_out], dim=1)  # (N, D')
+        # feature_out = gat_out
+        #############################################################################################
+        x = self.dropout(feature_out)
+        x = self.fcs(x)
+        logit = self.fc_final(x)
+        return logit
