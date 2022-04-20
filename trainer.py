@@ -104,7 +104,17 @@ def get_bert_optimizer(args, model):
 # 训练模型
 def train(args, train_dataset, model, test_dataset):
     # the tensorboard writer
-    tb_writer = SummaryWriter()
+    if args.gat_noReshape_our:
+        tb_writer_log_path = "gat_noReshape_our_{}_tensorboard_log".format(args.dataset_name)
+    elif args.pure_bert:
+        tb_writer_log_path = "pure_bert_{}_tensorboard_log".format(args.dataset_name)      
+    elif args.gat_noTogether_our:
+        tb_writer_log_path = "gat_noTogether_our_{}_tensorboard_log".format(args.dataset_name)      
+    elif args.gat_noDep_our:
+        tb_writer_log_path = "gat_noDep_our_{}_tensorboard_log".format(args.dataset_name)      
+    else:
+        tb_writer_log_path = "gat_noReshape_bert_{}_tensorboard_log".format(args.dataset_name)      
+    tb_writer = SummaryWriter(tb_writer_log_path)
 
     args.train_batch_size = args.per_gpu_train_batch_size
     train_sampler = RandomSampler(train_dataset)
