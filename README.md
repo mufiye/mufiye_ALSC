@@ -190,6 +190,24 @@ torch.unsqueeze()
    * dep_rel_num
    * adj
    * rel_adj 
-#### 关于训练设置的参数
-1. learning_rate: 0.01, 0.001
-2. gcn_num_layer: 2, 3
+#### 关于训练计划
+##### 训练的模型的选择
+1. No_Mix_GAT_our
+2. No_Reshaped_GAT_Bert
+##### 训练参数的设置（只列出需要更改的）
+1. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer
+2. dropout：先试试0.7, drop out rate for embedding
+3. num_gcn_layers: 2或者3
+4. gcn_dropout: 0.0或0.2
+5. hidden_size: 100或200？感觉太大了要出事，可以试试300
+6. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size
+7. num_mlps：1或者2
+8. per_gpu_train_batch_size: 64或32(尽可能大)
+9.  learning_rate: 0.001, 0.01, BERT的话可以小很多(比5e-5小)
+10. num_train_epoches：BERT小于等于30，noMix边界待探索
+    
+11. gradient_accumulation_steps: 设成1试试看？
+12. weight_decay: 关于bert，不变了
+13. adam epsilon：关于bert，不变了
+14. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
+15. gcn_mem_dim: 无法改变
