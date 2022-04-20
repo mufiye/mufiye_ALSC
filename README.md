@@ -197,7 +197,7 @@ torch.unsqueeze()
 ##### 训练参数的设置（只列出需要更改的）
 1. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer(laptop设为2，rest和twitter设为1)
 2. dropout：先试试0.7, drop out rate for embedding
-3. num_gcn_layers: 2或者3
+3. num_gcn_layers: 2或者3(三个数据集都是2比较好)
 4. gcn_dropout: 0.0或0.2
 5. hidden_size: 100或200？感觉太大了要出事，可以试试300
 6. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size

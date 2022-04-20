@@ -55,7 +55,7 @@ def parse_args():
                         help='Directory to store intermedia data.')
     parser.add_argument('--if_cuda', default=True, action='store_false',
                         help='about use cuda or not')
-    parser.add_argument('--seed', type=int, default=2019,
+    parser.add_argument('--seed', type=int, default=2022,
                         help='random seed for initialization')
     
     
