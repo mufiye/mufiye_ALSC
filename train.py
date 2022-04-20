@@ -207,6 +207,8 @@ def main():
         model = No_Together_GAT_our(args, dep_tag_vocab['len'])
     elif args.gat_noDep_our:
         model = No_Dep_GAT_our(args)
+    elif args.gat_bert:
+        model = No_Reshaped_GAT_Bert(args,dep_tag_vocab['len'])
     model.to(args.device)
 
     # Train: about trainer python file
