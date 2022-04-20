@@ -6,5 +6,5 @@ source activate mufiye_NLP
 
 # rest
 python train.py --num_train_epochs 100 --gat_noMix_our --dataset_name rest --highway \
-                --dropout 0.8 --per_gpu_train_batch_size 64 --num_mlps 2 \
+                --dropout 0.8 --per_gpu_train_batch_size 16 --num_mlps 2 \
                 --hidden_size 100 --final_hidden_size 100 
