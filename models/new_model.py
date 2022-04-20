@@ -108,9 +108,9 @@ class No_Reshaped_GAT_our(nn.Module):
         logit = self.fc_final(x)
         return logit
 
-class No_Together_GAT_our(nn.Module):
+class No_Mix_GAT_our(nn.Module):
     def __init__(self, args, dep_rel_num):
-        super(No_Together_GAT_our, self).__init__()
+        super(No_Mix_GAT_our, self).__init__()
         self.args = args
 
         num_embeddings, embed_dim = args.glove_embedding.shape

@@ -123,8 +123,8 @@ def parse_args():
     # new parameter about model
     parser.add_argument('--gat_noReshape_our', action='store_true',
                         help='gat_noReshape_our')
-    parser.add_argument('--gat_noTogether_our', action='store_true',
-                        help='gat_noTogether_our')
+    parser.add_argument('--gat_noMix_our', action='store_true',
+                        help='gat_noMix_our')
     parser.add_argument('--gat_noDep_our', action='store_true',
                         help='gat_noDep_our')
     parser.add_argument('--gat_noReshape_bert', action='store_true',
@@ -203,8 +203,8 @@ def main():
         model = No_Reshaped_GAT_our(args, dep_tag_vocab['len'])
     elif args.pure_bert:
         model = Pure_Bert(args)
-    elif args.gat_noTogether_our:
-        model = No_Together_GAT_our(args, dep_tag_vocab['len'])
+    elif args.gat_noMix_our:
+        model = No_Mix_GAT_our(args, dep_tag_vocab['len'])
     elif args.gat_noDep_our:
         model = No_Dep_GAT_our(args)
     elif args.gat_bert:
