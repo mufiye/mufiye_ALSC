@@ -7,4 +7,4 @@ source activate mufiye_NLP
 # laptop
 python train.py --num_train_epochs 100 --gat_noMix_our --dataset_name laptop --highway \
                 --per_gpu_train_batch_size 32 --dropout 0.7 --hidden_size 100 \
-                --final_hidden_size 100 --num_layers 2 --num_mlps 1
+                --final_hidden_size 100 --num_layers 2 --num_mlps 3
