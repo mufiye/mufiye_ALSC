@@ -123,6 +123,10 @@ def parse_args():
     # new parameter about model
     parser.add_argument('--gat_noReshape_our', action='store_true',
                         help='gat_noReshape_our')
+    parser.add_argument('--gat_noTogether_our', action='store_true',
+                        help='gat_noTogether_our')
+    parser.add_argument('--gat_noDep_our', action='store_true',
+                        help='gat_noDep_our')
     parser.add_argument('--gat_noReshape_bert', action='store_true',
                         help='gat_noReshape_bert')
     parser.add_argument('--pure_bert', action='store_true',
@@ -196,9 +200,13 @@ def main():
     # else:
     #     model = Aspect_Text_GAT_only(args, dep_tag_vocab['len'], pos_tag_vocab['len'])  # original GAT with reshaped tree
     if args.gat_noReshape_our:
-        model = No_Reshaped_GAT_ours(args, dep_tag_vocab['len'])
+        model = No_Reshaped_GAT_our(args, dep_tag_vocab['len'])
     elif args.pure_bert:
         model = Pure_Bert(args)
+    elif args.gat_noTogether_our:
+        model = No_Together_GAT_our(args, dep_tag_vocab['len'])
+    elif args.gat_noDep_our:
+        model = No_Dep_GAT_our(args)
     model.to(args.device)
 
     # Train: about trainer python file

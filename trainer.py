@@ -199,6 +199,12 @@ def train(args, train_dataset, model, test_dataset):
                         elif args.pure_bert:
                             model_path = './saved_models/state_dict/best_model/pure_bert_{}_acc_{:.4f}_f1_{:.4f}' \
                                             .format(args.dataset_name, results['acc'], results['f1'])
+                        elif args.gat_noTogether_our:
+                            model_path = './saved_models/state_dict/best_model/gat_noTogether_our_{}_acc_{:.4f}_f1_{:.4f}' \
+                                            .format(args.dataset_name, results['acc'], results['f1'])
+                        elif args.gat_noDep_our:
+                            model_path = './saved_models/state_dict/best_model/gat_noDep_our_{}_acc_{:.4f}_f1_{:.4f}' \
+                                            .format(args.dataset_name, results['acc'], results['f1'])
                         else:
                             model_path = './saved_models/state_dict/best_model/gat_noReshape_bert_{}_acc_{:.4f}_f1_{:.4f}' \
                                             .format(args.dataset_name, results['acc'], results['f1'])
@@ -210,6 +216,12 @@ def train(args, train_dataset, model, test_dataset):
                                 .format(args.dataset_name, train_epoch+1)
             elif args.pure_bert:
                 checkpoint_model_path = './saved_models/state_dict/checkPoint/pure_bert_{}_checkPoint_{}' \
+                                .format(args.dataset_name, train_epoch+1)
+            elif args.gat_noTogether_our:
+                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noTogether_our_{}_checkPoint_{}' \
+                                .format(args.dataset_name, train_epoch+1)
+            elif args.gat_noDep_our:
+                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noDep_our_{}_checkPoint_{}' \
                                 .format(args.dataset_name, train_epoch+1)
             else:
                 checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noReshape_bert_{}_checkPoint_{}' \
@@ -272,6 +284,10 @@ def evaluate(args, eval_dataset, model):
         eval_results_fileName = 'eval_results_gat_noReshape_our_{}.txt'.format(args.dataset_name)
     elif args.pure_bert:
         eval_results_fileName = 'eval_results_pure_bert_{}.txt'.format(args.dataset_name)
+    elif args.gat_noTogether_our:
+        eval_results_fileName = 'eval_results_gat_noTogether_our_{}.txt'.format(args.dataset_name)
+    elif args.gat_noDep_our:
+        eval_results_fileName = 'eval_results_gat_noDep_our_{}.txt'.format(args.dataset_name)
     else:
         eval_results_fileName = 'eval_results_gat_noReshape_bert_{}.txt'.format(args.dataset_name)
     output_eval_file = os.path.join('./saved_models', eval_results_fileName)
