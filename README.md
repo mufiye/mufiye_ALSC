@@ -195,7 +195,7 @@ torch.unsqueeze()
 1. No_Mix_GAT_our
 2. No_Reshaped_GAT_Bert
 ##### 训练参数的设置（只列出需要更改的）
-1. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer
+1. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer(laptop设为2，rest和twitter设为1)
 2. dropout：先试试0.7, drop out rate for embedding
 3. num_gcn_layers: 2或者3
 4. gcn_dropout: 0.0或0.2
