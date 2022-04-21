@@ -220,18 +220,19 @@ torch.unsqueeze()
 2. gcn_dropout: 0~0.9(试试按照普通模型的经验)
 3. num_mlps：1，2，3(试试按照普通模型的经验)
 4. final_hidden_size：100，200，300(一个个试过去)
-5. per_gpu_train_batch_size: 64，32，16，8(试试按照普通模型的经验)
-6. learning_rate: 5e-5(或更小？)
-7. num_train_epoches：50（稍微大一点好了，好像30就稳定收敛了）
 8. seed: 0,2019,2022(试试按照普通模型的经验)
-9.  num_layers: 1或者2(试试按照普通模型的经验)
 10. num_gcn_layers: 2或3(试试按照普通模型的经验)
-   
-11. gradient_accumulation_steps: 设成1试试看？
-12. weight_decay: 关于bert，不变了
-13. adam epsilon：关于bert，不变了
-14. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
-15. gcn_mem_dim: 无法改变
+
+9.  num_layers: laptop(2)，rest和twitter(1)
+6. learning_rate: 5e-5(根据pure_bert模型)
+7. num_train_epoches：50（稍微大一点好了，好像30就稳定收敛了）
+11. per_gpu_train_batch_size: twitter(16), rest与laptop(32)
+
+12. gradient_accumulation_steps: 设成1试试看？
+13. weight_decay: 关于bert，不变了
+14. adam epsilon：关于bert，不变了
+15. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
+16. gcn_mem_dim: 无法改变
 
 ###### Pure-Bert
 1. hidden_size: 就是相当于final_hidden_size(但是写了无法更改？)
