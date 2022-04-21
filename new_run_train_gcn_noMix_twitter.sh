@@ -9,4 +9,4 @@ source activate mufiye_NLP
 python train.py --num_train_epochs 100 --gat_noMix_our --dataset_name twitter --highway \
                 --per_gpu_train_batch_size 32 --dropout 0.6 --num_mlps 2 \
                 --gcn_dropout 0.0  \
-                --hidden_size 200 --final_hidden_size 100 
+                --hidden_size 200 --final_hidden_size 200 
