@@ -198,10 +198,10 @@ torch.unsqueeze()
 
 1. dropout：先试试0.7, drop out rate for embedding
 2. gcn_dropout: 0.0或0.2(twitter设为0,其它两个数据集设为0.2但是这个参数还值得再尝试)
-3. hidden_size: 100或200？感觉太大了要出事，可以试试300(目前最优：--hidden_size 100 --final_hidden_size 100)
-4. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size
-5. num_mlps：1,2,3(1不行，laptop 3更好一点，其它都是2好一些，但我推测这和hidden size有关)
-   
+3. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size
+4. num_mlps：1,2,3(1不行，laptop 3更好一点，其它都是2好一些，但我推测这和hidden size有关)
+
+5. hidden_size: 100或200？感觉太大了要出事，可以试试300(目前最优：--hidden_size 100 --final_hidden_size 100,试过了200、100和200、200)
 6. per_gpu_train_batch_size: 64，32，16，8(尽可能大,laptop和rest32比较合适，twitter为8的时候f1稍微高一些)
 7. learning_rate: 0.001和0.01(0.001比较好), BERT的话可以小很多(比5e-5小)
 8. num_train_epoches：BERT小于等于30，noMix边界待探索
