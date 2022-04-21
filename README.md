@@ -198,19 +198,19 @@ torch.unsqueeze()
 
 1. dropout：先试试0.7, drop out rate for embedding
 2. gcn_dropout: 0.0或0.2(twitter设为0,其它两个数据集设为0.2但是这个参数还值得再尝试)
-3. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size
-4. num_mlps：1,2,3(1不行，laptop 3更好一点，其它都是2好一些，但我推测这和hidden size有关)
 
-5. hidden_size: 100或200？感觉太大了要出事，可以试试300(目前最优：--hidden_size 100 --final_hidden_size 100,试过了200、100和200、200)
+3. num_mlps：1,2,3(1不行，laptop 3更好一点，其它都是2好一些，但我推测这和hidden size有关)
+4. hidden_size: 100或200？感觉太大了要出事，可以试试300(目前最优：--hidden_size 100 --final_hidden_size 100,试过了200、100和200、200,也试过和num_mlps组合)
+5. final_hidden_size：与hidden_size和num_mlps有关系，但一定要小于等于hidden_size
 6. per_gpu_train_batch_size: 64，32，16，8(尽可能大,laptop和rest32比较合适，twitter为8的时候f1稍微高一些)
 7. learning_rate: 0.001和0.01(0.001比较好), BERT的话可以小很多(比5e-5小)
 8. num_train_epoches：BERT小于等于30，noMix边界待探索
-9. seed: rest是--seed 2019的时候性能会好点，其它是--seed 2022
+9.  seed: rest是--seed 2019的时候性能会好点，其它是--seed 2022
 10. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer(laptop设为2，rest和twitter设为1)
 11. num_gcn_layers: 2或者3(三个数据集都是2比较好)
    
-12. gradient_accumulation_steps: 设成1试试看？
-13. weight_decay: 关于bert，不变了
-14. adam epsilon：关于bert，不变了
-15. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
-16. gcn_mem_dim: 无法改变
+13. gradient_accumulation_steps: 设成1试试看？
+14. weight_decay: 关于bert，不变了
+15. adam epsilon：关于bert，不变了
+16. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
+17. gcn_mem_dim: 无法改变
