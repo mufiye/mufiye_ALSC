@@ -195,7 +195,7 @@ torch.unsqueeze()
 1. No_Mix_GAT_our
 2. No_Reshaped_GAT_Bert
 ##### 训练参数的设置（只列出需要更改的）
-
+###### 对于noMix model
 1. dropout：先试试0.7, drop out rate for embedding
 2. gcn_dropout: 0.0或0.2(twitter设为0,其它两个数据集设为0.2但是这个参数还值得再尝试)
 
@@ -214,3 +214,22 @@ torch.unsqueeze()
 15. adam epsilon：关于bert，不变了
 16. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
 17. gcn_mem_dim: 无法改变
+
+###### 对于Bert-base model
+1. dropout：
+2. gcn_dropout: 
+3. num_mlps：
+4. hidden_size: 
+5. final_hidden_size：
+6. per_gpu_train_batch_size: 
+7. learning_rate: 
+8. num_train_epoches：
+9. seed: 
+10. num_layers: 
+11. num_gcn_layers: 
+   
+12. gradient_accumulation_steps: 设成1试试看？
+13. weight_decay: 关于bert，不变了
+14. adam epsilon：关于bert，不变了
+15. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
+16. gcn_mem_dim: 无法改变
