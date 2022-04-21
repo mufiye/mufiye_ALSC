@@ -216,7 +216,7 @@ torch.unsqueeze()
 16. gcn_mem_dim: 无法改变
 
 ###### 对于Bert-base model
-1. dropout：0.0~0.9
+1. dropout：laptop和twitter是0.0，rest是0.3
 2. gcn_dropout: 0.0~0.9
    
 3. seed: 就和普通模型一样吧

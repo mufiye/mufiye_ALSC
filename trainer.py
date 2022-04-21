@@ -113,7 +113,7 @@ def train(args, train_dataset, model, test_dataset):
     elif args.gat_noDep_our:
         tb_writer_log_path = "gat_noDep_our_{}_tensorboard_log".format(args.dataset_name)      
     elif args.gat_bert:
-        tb_writer_log_path = "gat_noReshape_bert_{}_dropout_{}_tensorboard_log".format(args.dataset_name,args.dropout)      
+        tb_writer_log_path = "gat_noReshape_bert_{}_gcn_dropout_{}_tensorboard_log".format(args.dataset_name,args.gcn_dropout)      
     tb_writer = SummaryWriter(tb_writer_log_path)
 
     args.train_batch_size = args.per_gpu_train_batch_size
@@ -216,8 +216,8 @@ def train(args, train_dataset, model, test_dataset):
                             model_path = './saved_models/state_dict/best_model/gat_noDep_our_{}_acc_{:.4f}_f1_{:.4f}' \
                                             .format(args.dataset_name, results['acc'], results['f1'])
                         elif args.gat_bert:
-                            model_path = './saved_models/state_dict/best_model/gat_noReshape_bert_{}_acc_{:.4f}_f1_{:.4f}_dropout_{}' \
-                                            .format(args.dataset_name, results['acc'], results['f1'], args.dropout)
+                            model_path = './saved_models/state_dict/best_model/gat_noReshape_bert_{}_acc_{:.4f}_f1_{:.4f}_gcn_dropout_{}' \
+                                            .format(args.dataset_name, results['acc'], results['f1'], args.gcn_dropout)
                         
         # check point
         if (train_epoch+1) % 20 == 0:
@@ -234,8 +234,8 @@ def train(args, train_dataset, model, test_dataset):
                 checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noDep_our_{}_checkPoint_{}' \
                                 .format(args.dataset_name, train_epoch+1)
             elif args.gat_bert:
-                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noReshape_bert_{}_dropout_{}_checkPoint_{}' \
-                                .format(args.dataset_name, args.dropout, train_epoch+1)
+                checkpoint_model_path = './saved_models/state_dict/checkPoint/gat_noReshape_bert_{}_gcn_dropout_{}_checkPoint_{}' \
+                                .format(args.dataset_name, args.gcn_dropout, train_epoch+1)
             if not os.path.exists('./saved_models/state_dict'):
                 os.mkdir('./saved_models/state_dict')
             if not os.path.exists('./saved_models/state_dict/checkPoint'):
@@ -300,7 +300,7 @@ def evaluate(args, eval_dataset, model):
     elif args.gat_noDep_our:
         eval_results_fileName = 'eval_results_gat_noDep_our_{}.txt'.format(args.dataset_name)
     elif args.gat_bert:
-        eval_results_fileName = 'eval_results_gat_noReshape_bert_{}_dropout_{}.txt'.format(args.dataset_name,args.dropout)
+        eval_results_fileName = 'eval_results_gat_noReshape_bert_{}_gcn_dropout_{}.txt'.format(args.dataset_name,args.gcn_dropout)
     output_eval_file = os.path.join('./saved_models', eval_results_fileName)
     with open(output_eval_file, 'a+') as writer:
         logger.info('***** Eval results *****')

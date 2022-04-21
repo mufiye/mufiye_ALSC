@@ -13,8 +13,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.0
+                --dropout 0.0 \
+                --gcn_dropout 0.0
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -24,8 +24,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.1
+                --dropout 0.0 \
+                --gcn_dropout 0.1
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -35,8 +35,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.2
+                --dropout 0.0 \
+                --gcn_dropout 0.2
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -46,8 +46,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.3
+                --dropout 0.0 \
+                --gcn_dropout 0.3
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -57,8 +57,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.4
+                --dropout 0.0 \
+                --gcn_dropout 0.4
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -68,8 +68,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.5
+                --dropout 0.0 \
+                --gcn_dropout 0.5
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -79,8 +79,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.6
+                --dropout 0.0 \
+                --gcn_dropout 0.6
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -90,8 +90,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.7
+                --dropout 0.0 \
+                --gcn_dropout 0.7
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -101,8 +101,8 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.8
+                --dropout 0.0 \
+                --gcn_dropout 0.8
 
 python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_train_epochs 50 \
@@ -112,5 +112,5 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --num_layers 2 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
-                --gcn_dropout 0.2 \
-                --dropout 0.9
+                --dropout 0.0 \
+                --gcn_dropout 0.9
