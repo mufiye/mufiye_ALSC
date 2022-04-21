@@ -241,7 +241,8 @@ def train(args, train_dataset, model, test_dataset):
             if not os.path.exists('./saved_models/state_dict/checkPoint'):
                 os.mkdir('./saved_models/state_dict/checkPoint')
             torch.save(model, checkpoint_model_path)
-
+    logger.info("evaluate train dataset")
+    trainData_results, trainData_eval_loss = evaluate(args, train_dataset, best_model)
     tb_writer.close()
     return global_step, tr_loss/global_step, all_eval_results, best_model, model_path
 
