@@ -197,7 +197,7 @@ torch.unsqueeze()
 ##### 训练参数的设置（只列出需要更改的）
 ###### 对于noMix model
 1. dropout：rest(0.8),laptop(0.7),twitter(0.5)
-2. gcn_dropout: 0.0或0.2(twitter设为0,其它两个数据集设为0.2但是这个参数还值得再尝试)
+2. gcn_dropout: 0.0或0.2(twitter设为0,rest是0.2,laptop是0.8(或0.2?))
 
 3. num_mlps：1,2,3(1不行，laptop 3更好一点，其它都是2好一些，但我推测这和hidden size有关)
 4. hidden_size: 100或200？感觉太大了要出事，可以试试300(目前最优：--hidden_size 100 --final_hidden_size 100,试过了200、100和200、200,也试过和num_mlps组合)
@@ -209,11 +209,11 @@ torch.unsqueeze()
 10. num_layers: 1或者2, 这个layer是LSTM或者Highway的layer(laptop设为2，rest和twitter设为1)
 11. num_gcn_layers: 2或者3(三个数据集都是2比较好)
    
-13. gradient_accumulation_steps: 设成1试试看？
-14. weight_decay: 关于bert，不变了
-15. adam epsilon：关于bert，不变了
-16. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
-17. gcn_mem_dim: 无法改变
+12. gradient_accumulation_steps: 设成1试试看？
+13. weight_decay: 关于bert，不变了
+14. adam epsilon：关于bert，不变了
+15. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
+16. gcn_mem_dim: 无法改变
 
 ###### 对于Bert-base model
 1. dropout：0~0.9(试试按照普通模型的经验)
@@ -232,3 +232,6 @@ torch.unsqueeze()
 13. adam epsilon：关于bert，不变了
 14. max_grad_norm：关于torch.nn.utils.clip_grad_norm_()函数，也不变了
 15. gcn_mem_dim: 无法改变
+
+###### Pure-Bert
+1. hidden_size: 就是相当于final_hidden_size(但是写了无法更改？)
