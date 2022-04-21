@@ -216,16 +216,16 @@ torch.unsqueeze()
 16. gcn_mem_dim: 无法改变
 
 ###### 对于Bert-base model
-1. dropout：0~0.9(试试按照普通模型的经验)
-2. gcn_dropout: 0~0.9(试试按照普通模型的经验)
-3. seed: 0,2019,2022(试试按照普通模型的经验)
-
+1. dropout：0.0~0.9
+2. gcn_dropout: 0.0~0.9
+   
+3. seed: 就和普通模型一样吧
 4. num_mlps：laptop为3，rest和twitter为2
 5. final_hidden_size：都设为256
 6.  num_gcn_layers: 2或3(都设为2)
 7.  num_layers: laptop(2)，rest和twitter(1)
 8.  learning_rate: 5e-5(根据pure_bert模型)
-9. num_train_epoches：50（稍微大一点好了，好像30就稳定收敛了）
+9.  num_train_epoches：50（稍微大一点好了，好像30就稳定收敛了）
 10. per_gpu_train_batch_size: twitter(16), rest与laptop(32)
 
 11. gradient_accumulation_steps: 设成1试试看？
