@@ -10,7 +10,7 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop \
                 --learning_rate 5e-5 \
                 --per_gpu_train_batch_size 32 \
                 --num_gcn_layers 2 \
-                --num_layers 2 \
+                --num_layers 1 \
                 --final_hidden_size 256 \
                 --num_mlps 3 \
                 --dropout 0.3 \
