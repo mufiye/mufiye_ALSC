@@ -13,9 +13,14 @@ import torch.nn.functional as F
 import numpy as np
 import argparse
 import logging
-from load_data import get_rolled_and_unrolled_data, load_and_cache_vocabs_vectors
-from models.model import (Aspect_Text_GAT_ours,
-                    Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
+
+# changed
+# from load_data import get_rolled_and_unrolled_data, load_and_cache_vocabs_vectors
+# from models.model import (Aspect_Text_GAT_ours,
+#                     Pure_Bert, Aspect_Bert_GAT, Aspect_Text_GAT_only)
+from new_load_data import get_rolled_and_unrolled_data, load_and_cache_vocabs_vectors
+from models.new_model import *
+
 from transformers import (BertConfig, BertForTokenClassification,
                                   BertTokenizer)
 
@@ -45,22 +50,21 @@ class Inferer:
     def __init__(self, opt):
         self.opt = opt
         # 根据model class以及opt参数设置model
-        if self.opt.modelName == 'gat_our' or self.opt.modelName == 'gat_only':
+        if self.opt.model_choice == 1:
             self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
             embedding = torch.from_numpy(np.asarray(self.word_vecs, dtype=np.float32))
             self.opt.glove_embedding = embedding
-            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'], self.pos_tag_vocab['len'])
+            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'])
             self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
             self.model = self.model.to(self.opt.device)
-        elif self.opt.modelName == 'gat_bert':
+        elif self.opt.model_choice == 2:
             self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
-            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'], self.pos_tag_vocab['len'])
+            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'])
             self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
             self.model = self.model.to(self.opt.device)
             tokenizer = BertTokenizer.from_pretrained(opt.bert_model_dir)
             self.opt.tokenizer = tokenizer
-        else: #pure_bert case
-            self.model = self.opt.model_class(self.opt)
+
         # switch model to evaluation mode
         self.model.eval()
         torch.autograd.set_grad_enabled(False)
@@ -171,27 +175,23 @@ class Inferer:
             for term in unrolled_data['aspect']:
                 unrolled_data['aspect_position'][unrolled_data['sentence'].index(term)] = 1
         unrolled_data['dep_tag_ids'] = [self.dep_tag_vocab['stoi'][w]
-                                           for w in unrolled_data['dep_tag']]
-        unrolled_data['dep_dir_ids'] = [idx for idx in unrolled_data['dep_dir']]
+                                           for w in unrolled_data['predicted_dependencies']]
         unrolled_data['pos_class'] = [self.pos_tag_vocab['stoi'][w]
                                              for w in unrolled_data['tags']]
         unrolled_data['aspect_len'] = len(unrolled_data['aspect'])
-        unrolled_data['dep_rel_ids'] = [self.dep_tag_vocab['stoi'][r]
-                                           for r in unrolled_data['predicted_dependencies']]
         
         # 3.关于普通数据到tensor的转换(__getitem__函数，还有allocate函数有关系吗？)
         items = unrolled_data['dep_tag_ids'],unrolled_data['pos_class'], unrolled_data['text_len'],\
-            unrolled_data['aspect_len'], unrolled_data['sentiment'],unrolled_data['dep_rel_ids'], \
-            unrolled_data['predicted_heads'], unrolled_data['aspect_position'], unrolled_data['dep_dir_ids']
+            unrolled_data['aspect_len'], unrolled_data['sentiment'],\
+            unrolled_data['predicted_heads'], unrolled_data['aspect_position']
         if self.opt.embedding_type == 'glove':
             non_bert_items = unrolled_data['sentence_ids'], unrolled_data['aspect_ids']
             items_tensor = non_bert_items + items
             items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in items_tensor)
-        else:
-            if self.opt.modelName == 'gat_bert':
-                bert_items = unrolled_data['input_ids'], unrolled_data['word_indexer'], unrolled_data['input_aspect_ids'], unrolled_data['aspect_indexer'], unrolled_data['input_cat_ids'], unrolled_data['segment_ids']
-                items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in bert_items)
-                items_tensor += tuple(torch.unsqueeze(torch.tensor(t),0) for t in items)
+        elif self.opt.embedding_type == 'bert':
+            bert_items = unrolled_data['input_ids'], unrolled_data['word_indexer'], unrolled_data['input_aspect_ids'], unrolled_data['aspect_indexer'], unrolled_data['input_cat_ids'], unrolled_data['segment_ids']
+            items_tensor = tuple(torch.unsqueeze(torch.tensor(t),0) for t in bert_items)
+            items_tensor += tuple(torch.unsqueeze(torch.tensor(t),0) for t in items)
         #####################################
         # 测试代码4：关于pytorch的tensor
         #####################################
@@ -203,10 +203,8 @@ class Inferer:
                         'pos_class': items_tensor[3],
                         'text_len': items_tensor[4],
                         'aspect_len': items_tensor[5],
-                        'dep_rels': items_tensor[7], # adj no-reshape
-                        'dep_heads': items_tensor[8],
-                        'aspect_position': items_tensor[9],
-                        'dep_dirs': items_tensor[10]}
+                        'dep_heads': items_tensor[7],
+                        'aspect_position': items_tensor[8]}
         else:
             inputs = {  'input_ids': items_tensor[0],
                         'input_aspect_ids': items_tensor[2],
@@ -218,123 +216,101 @@ class Inferer:
                         'pos_class': items_tensor[7],
                         'text_len': items_tensor[8],
                         'aspect_len': items_tensor[9],
-                        'dep_rels': items_tensor[11],
-                        'dep_heads': items_tensor[12],
-                        'aspect_position': items_tensor[13],
-                        'dep_dirs': items_tensor[14]}
+                        'dep_heads': items_tensor[11],
+                        'aspect_position': items_tensor[12]}
         t_outputs = self.model(**inputs)
         t_probs = F.softmax(t_outputs, dim=-1).cpu().numpy()
 
         return t_probs
 
-# parser是为了区分不同的模型，以及是否使用cuda
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--gat_our', action='store_true',
-                        help='GAT_our')
-    parser.add_argument('--pure_bert', action='store_true',
-                        help='Cat text and aspect, [cls] to predict.')
-    parser.add_argument('--gat_bert', action='store_true',
-                        help='Cat text and aspect, [cls] to predict.')
-    parser.add_argument('--gat_ouly', action='store_true',
-                        help='GAT_only')
-    parser.add_argument('--if_cuda', default=True, action='store_false',
-                        help='about use cuda or not')
-    return parser.parse_args()
-
-# 打印这些参数
-def check_args(args):
-    logger.info(vars(args))
-
 '''
 refer from https://github.com/songyouwei/ABSA-PyTorch/blob/master/infer_example.py
 '''
 
-def infering(text, aspect):
+def infering(text, aspect, model_choice=1, dataset_choice=1,use_cuda=False):
     # setup logging
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
-    # for no args
-    # args = parse_args()
-
-    class Option(object): pass
-    args = Option()
-    args.if_cuda = False
-    args.gat_our = False
-    args.gat_bert = True
-    args.pure_bert = False
-
     # 已补全: model_classes, 指模型名称及其对应的class
     model_classes = {
-        'gat_our': Aspect_Text_GAT_ours,
-        'gat_bert': Aspect_Bert_GAT,
-        'pure_bert': Pure_Bert,
-        'gat_only': Aspect_Text_GAT_only,
+        'gat_noMix': No_Mix_GAT_our,
+        'gat_bert': No_Reshaped_GAT_Bert,
     }
 
     # 已补全: Option对象
+    class Option(object): pass
     opt=Option()
     opt.inInfer = True
-    if args.gat_our:
+    opt.model_choice = model_choice
+    if dataset_choice == 1:
+        opt.dataset_name = 'rest'
+    elif dataset_choice == 2:
+        opt.dataset_name = 'laptop'
+    else:
+        opt.dataset_name = 'twitter'
+    if use_cuda:
+        opt.if_cuda = True
+    else:
+        opt.if_cuda = False
+    if opt.model_choice == 1:
         # about model parameters
-        opt.modelName = 'gat_our'
-        opt.model_class = model_classes['gat_our']
-        opt.state_dict_path = 'saved_models/state_dict/best_model/gat_our_twitter_acc_0.7038_f1_0.6977'
+        opt.model_class = model_classes['gat_noMix']
         opt.highway = True
-        opt.num_layers = 2
-        opt.num_heads = 9
-        opt.num_gcn_layers = 1
-        opt.gcn_mem_dim = 300
         opt.embedding_type = 'glove'
+        opt.glove_dir = './datasets/Glove'
+        opt.num_gcn_layers = 2
         opt.embedding_dim = 300
         opt.dep_relation_embed_dim = 300
-        opt.hidden_size = 300
-        opt.final_hidden_size = 400
-        opt.num_mlps = 1
-        opt.gat_attention_type = 'dotprod'
-        opt.dropout = 0.6
+        opt.hidden_size = 100
+        opt.final_hidden_size = 100
         opt.num_classes = 3
-        # about dataset parameters
-        opt.dataset_name = 'twitter'
-        opt.glove_dir = './datasets/Glove'
-        opt.add_non_connect = True
-        opt.multi_hop = True
-        opt.max_hop = 4
-    elif args.gat_bert:
+        if opt.dataset_name == 'rest':
+            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_rest.pth'
+            opt.num_layers = 1
+            opt.num_mlps = 2
+            opt.dropout = 0.8
+            opt.gcn_dropout = 0.2
+        elif opt.dataset_name == 'laptop':
+            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_laptop.pth'
+            opt.num_layers = 2
+            opt.num_mlps = 3
+            opt.dropout = 0.7
+            opt.gcn_dropout = 0.8
+        elif opt.dataset_name == 'twitter':
+            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_twitter.pth'
+            opt.num_layers = 1
+            opt.num_mlps = 2
+            opt.dropout = 0.5
+            opt.gcn_dropout = 0.0
+    elif opt.model_choice == 2:
         # about model parameters
-        opt.modelName = 'gat_bert'
         opt.model_class = model_classes['gat_bert']
-        opt.state_dict_path = 'saved_models/state_dict/best_model/gat_bert_twitter_acc_0.7645_f1_0.7506'
         opt.highway = False
-        opt.num_layers = 2
-        opt.num_heads = 6
-        opt.num_gcn_layers = 1
-        opt.gcn_mem_dim = 300
         opt.embedding_type = 'bert'
-        opt.dep_relation_embed_dim = 300
-        opt.hidden_size = 200
-        opt.final_hidden_size = 300
-        opt.num_mlps = 2
-        opt.gat_attention_type = 'dotprod'
         opt.bert_model_dir = 'models/bert_base'
-        opt.dropout = 0.2
+        opt.num_gcn_layers = 2
+        opt.dep_relation_embed_dim = 300
+        opt.final_hidden_size = 256
         opt.num_classes = 3
-        # about dataset parameters
-        opt.dataset_name = 'twitter'
-        opt.add_non_connect = True
-        opt.multi_hop = True
-        opt.max_hop = 4
-    # pure_bert与gat_only先不考虑
-    elif args.pure_bert:
-        opt.modelName = 'pure_bert'
-        opt.model_class = model_classes['pure_bert']
-    else:
-        opt.modelName = 'gat_only'
-        opt.model_class = model_classes['gat_only']
+        if opt.dataset_name == 'rest':
+            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_rest.pth'
+            opt.num_mlps = 2
+            opt.dropout = 0.3
+            opt.gcn_dropout = 0.3
+        elif opt.dataset_name == 'laptop':
+            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_laptop.pth'
+            opt.num_mlps = 3
+            opt.dropout = 0.0
+            opt.gcn_dropout = 0.5
+        elif opt.dataset_name == 'twitter':
+            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_twitter.pth'
+            opt.num_mlps = 2
+            opt.dropout = 0.0
+            opt.gcn_dropout = 0.2
 
     # 关于用于infer的设备
-    device = torch.device('cuda' if args.if_cuda and torch.cuda.is_available() else 'cpu')    
+    device = torch.device('cuda' if opt.if_cuda and torch.cuda.is_available() else 'cpu')    
     opt.device = device
     logger.info('Device is %s', opt.device)
 
@@ -365,8 +341,99 @@ def infering(text, aspect):
 
 
 if __name__ == '__main__':
-    text = "wtf ? hilary swank is coming to my school today , just to chill . lol wow"
-    aspect = "hilary swank"
-    result = infering(text, aspect)
-    print(result)
+    # {'negative': 0, 'positive': 1, 'neutral': 2}
+    # twitter case
+    # positive
+    text_rest1 = "The bread is top notch as well."
+    aspect_rest1 = "bread"
+    # negative
+    text_rest2 = "In fact, this was not a Nicoise salad and was barely eatable."
+    aspect_rest2 = "Nicoise salad"
+    # neutral
+    text_rest3 = "The pizza is the best if you like thin crusted pizza."
+    aspect_rest3 = "thin crusted pizza"
+
+    # laptop case
+    # positive
+    text_laptop1 = "Boot time is super fast, around anywhere from 35 seconds to 1 minute."
+    aspect_laptop1 = "Boot time"
+    # negative
+    text_laptop2 = "I can barely use any usb devices because they will not stay connected properly."
+    aspect_laptop2 = "usb devices"
+    # neutral
+    text_laptop3 = "I took it back for an Asus and same thing- blue screen which required me to remove the battery to reset."
+    aspect_laptop3 = "battery"
+
+    # twitter case
+    # positive
+    text_twitter1 = "3 by britney spears is an amazing song"
+    aspect_twitter1 = "britney spears"
+    # negative
+    text_twitter2 = "God damn . That Sony remote for google is fucking hideeeeeous !"
+    aspect_twitter2 = "google"
+    # neutral
+    text_twitter3 = "my 3-year-old was amazed yesterday to find that ' real ' 10 pin bowling is nothing like it is on the wii ..."
+    aspect_twitter3 = "wii"
+
+    # model choice为1或2, dataset choice为1~3
+    print("---------------------------------------------------")
+    print("for test rest noMix model")
+    result = infering(text_rest1, aspect_rest1, 1, 1, False)
+    print("the result is: {}".format(result))
+    result = infering(text_rest2, aspect_rest2, 1, 1, False)
+    print("the result is: {}".format(result))
+    result = infering(text_rest3, aspect_rest3, 1, 1, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+
+    print("---------------------------------------------------")
+    print("for test laptop noMix model")
+    result = infering(text_laptop1, aspect_laptop1, 1, 2, False)
+    print("the result is: {}".format(result))
+    result = infering(text_laptop2, aspect_laptop2, 1, 2, False)
+    print("the result is: {}".format(result))
+    result = infering(text_laptop3, aspect_laptop3, 1, 2, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+
+    print("---------------------------------------------------")
+    print("for test twitter noMix model")
+    result = infering(text_twitter1, aspect_twitter1, 1, 3, False)
+    print("the result is: {}".format(result))
+    result = infering(text_twitter2, aspect_twitter2, 1, 3, False)
+    print("the result is: {}".format(result))
+    result = infering(text_twitter3, aspect_twitter3, 1, 3, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+
+    print("---------------------------------------------------")
+    print("for test rest bert-base model")
+    result = infering(text_rest1, aspect_rest1, 2, 1, False)
+    print("the result is: {}".format(result))
+    result = infering(text_rest2, aspect_rest2, 2, 1, False)
+    print("the result is: {}".format(result))
+    result = infering(text_rest3, aspect_rest3, 2, 1, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+    
+    print("---------------------------------------------------")
+    print("for test laptop bert-base model")
+    result = infering(text_laptop1, aspect_laptop1, 2, 2, False)
+    print("the result is: {}".format(result))
+    result = infering(text_laptop2, aspect_laptop2, 2, 2, False)
+    print("the result is: {}".format(result))
+    result = infering(text_laptop3, aspect_laptop3, 2, 2, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+
+    print("---------------------------------------------------")
+    print("for test twitter bert-base model")
+    result = infering(text_twitter1, aspect_twitter1, 2, 3, False)
+    print("the result is: {}".format(result))
+    result = infering(text_twitter2, aspect_twitter2, 2, 3, False)
+    print("the result is: {}".format(result))
+    result = infering(text_twitter3, aspect_twitter3, 2, 3, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
+
 
