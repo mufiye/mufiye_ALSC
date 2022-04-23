@@ -92,10 +92,10 @@ class newDotprodAttention(nn.Module):
 
         # changed place
         # feature与attention的权重做运算
-        print("the attention is: {}".format(attention))
-        print("the feature is: {}".format(feature))
+        # print("the attention is: {}".format(attention))
+        # print("the feature is: {}".format(feature))
         out =  torch.mul(feature,attention) # (N, L, D)
-        print("the out result is: {}".format(out))
+        # print("the out result is: {}".format(out))
         return out
 
 
