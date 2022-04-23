@@ -33,6 +33,30 @@ class RelationAttention(nn.Module):
         # out = F.sigmoid(out)
         return out  # (N, D)
 
+class newRelationAttention(nn.Module):
+    def __init__(self, in_dim = 300, hidden_dim = 64):
+        # in_dim: the dimension fo query vector
+        super().__init__()
+
+        self.fc1 = nn.Linear(in_dim, hidden_dim)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_dim, 1)
+
+    def forward(self, feature, dep_tags_v, dmask):
+        '''
+        C feature/context [N, L, D]
+        Q dep_tags_v          [N, L, D]
+        mask dmask          [N, L]
+        '''
+        Q = self.fc1(dep_tags_v)
+        Q = self.relu(Q)
+        Q = self.fc2(Q)  # (N, L, 1)
+        Q = Q.squeeze(2)
+        Q = F.softmax(mask_logits(Q, dmask), dim=1)
+
+        Q = Q.unsqueeze(2) # (N, L, 1)
+        out =  torch.mul(feature,Q)
+        return out  # (N, D)
 
 class LinearAttention(nn.Module):
     '''

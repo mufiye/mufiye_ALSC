@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from models.model_gcn import GAT, GCN, Rel_GAT
-from models.model_utils import LinearAttention, newDotprodAttention, DotprodAttention, RelationAttention, Highway, mask_logits
+from models.model_utils import LinearAttention, newDotprodAttention, DotprodAttention, newRelationAttention, RelationAttention, Highway, mask_logits
 from models.tree import *
 
 # class No_Reshaped_GAT_our(nn.Module):
@@ -700,6 +700,104 @@ class No_Reshaped_GAT_Bert(nn.Module):
 # new dep model v4
 # try to use multihead attention module
 
+# class No_Reshaped_GAT_our(nn.Module):
+#     def __init__(self, args, dep_rel_num):
+#         super(No_Reshaped_GAT_our, self).__init__()
+#         self.args = args
+
+#         num_embeddings, embed_dim = args.glove_embedding.shape
+#         self.embed = nn.Embedding(num_embeddings, embed_dim)
+#         self.embed.weight = nn.Parameter(
+#             args.glove_embedding, requires_grad=False)
+
+#         self.dep_rel_embed = nn.Embedding(dep_rel_num, args.dep_relation_embed_dim)
+#         nn.init.xavier_uniform_(self.dep_rel_embed.weight)
+
+#         self.dropout = nn.Dropout(args.dropout)
+#         self.tanh = nn.Tanh()
+
+#         if args.highway:
+#             self.highway_dep = Highway(args.num_layers, args.dep_relation_embed_dim)
+#             self.highway = Highway(args.num_layers, args.embedding_dim)
+
+#         self.bilstm = nn.LSTM(input_size=args.embedding_dim, hidden_size=args.hidden_size,
+#                               bidirectional=True, batch_first=True, num_layers=args.num_layers)
+#         word_input_dim = args.hidden_size * 2
+#         gcn_output_dim = word_input_dim
+
+#         # the changed place
+#         self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
+#         self.aspect_attention = [DotprodAttention().to(args.device) for i in range(args.num_heads)]
+#         self.aspect_attention2 = newDotprodAttention().to(args.device)
+#         self.dep_attention = [RelationAttention(in_dim = gcn_output_dim).to(args.device) for i in range(args.num_heads)]
+
+#         # the last mlp part
+#         # gat_nomask_concat
+#         last_hidden_size = gcn_output_dim * 2
+
+#         # gat_nomask_noconcat
+#         # last_hidden_size = args.hidden_size * 2
+#         layers = [
+#             nn.Linear(last_hidden_size, args.final_hidden_size), nn.ReLU()]
+#         for _ in range(args.num_mlps-1):
+#             layers += [nn.Linear(args.final_hidden_size,
+#                                  args.final_hidden_size), nn.ReLU()]
+#         self.fcs = nn.Sequential(*layers)
+#         self.fc_final = nn.Linear(args.final_hidden_size, args.num_classes)
+
+#     def forward(self, sentence, aspect, pos_class, dep_tags, text_len, aspect_len, dep_heads, aspect_position):
+#         '''
+#         Forward takes:
+#             sentence: sentence_id of size (batch_size, text_length)
+#             aspect: aspect_id of size (batch_size, aspect_length)
+#             pos_class: pos_tag_id of size (batch_size, text_length)
+#             dep_tags: dep_tag_id of size (batch_size, text_length)
+#             text_len: (batch_size,) length of each sentence
+#             aspect_len: (batch_size, ) aspect length of each sentence
+#             dep_heads: (batch_size, text_length) which node adjacent to that node
+#             aspect_position: (batch_size, text_length) mask, with the position of aspect as 1 and others as 0
+#         '''
+#         fmask = (torch.zeros_like(sentence) != sentence).float()  # (N，L)
+#         feature = self.embed(sentence)  # (N, L, D)
+#         aspect_feature = self.embed(aspect) # (N, L', D)
+
+#         feature = self.dropout(feature)
+#         aspect_feature = self.dropout(aspect_feature)
+
+#         if self.args.highway:
+#             feature = self.highway(feature)
+#             aspect_feature = self.highway(aspect_feature)
+
+#         feature, _ = self.bilstm(feature) # (N,L,D)
+#         aspect_feature, _ = self.bilstm(aspect_feature) #(N,L,D)
+
+#         aspect_feature = aspect_feature.mean(dim = 1) #(N,D)
+
+#         #########################################################
+#         # do thing about gat, the part changed
+#         adj = inputs_to_tree_reps(self.args, dep_heads,text_len,-1).to(self.args.device)
+
+#         dep_feature = self.dep_rel_embed(dep_tags)
+#         dep_feature = self.highway_dep(dep_feature)
+#         dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
+#         new_feature = self.aspect_attention2(feature,aspect_feature,fmask)
+        
+#         dep_feature = [g(new_feature,dep_feature,fmask).unsqueeze(1) for g in self.dep_attention]
+#         dep_feature = torch.cat(dep_feature, dim=1)
+#         dep_feature = dep_feature.mean(dim=1)
+
+#         word_feature = [g(feature,aspect_feature,fmask).unsqueeze(1) for g in self.aspect_attention]
+#         word_feature = torch.cat(word_feature, dim=1)
+#         word_feature = word_feature.mean(dim=1)
+
+#         feature_out = torch.cat([dep_feature, word_feature], dim = 1) # (N, D')
+#         x = self.dropout(feature_out)
+#         x = self.fcs(x)
+#         logit = self.fc_final(x)
+#         return logit
+
+# new dep model v5
+# only change the attention place
 class No_Reshaped_GAT_our(nn.Module):
     def __init__(self, args, dep_rel_num):
         super(No_Reshaped_GAT_our, self).__init__()
@@ -724,12 +822,14 @@ class No_Reshaped_GAT_our(nn.Module):
                               bidirectional=True, batch_first=True, num_layers=args.num_layers)
         word_input_dim = args.hidden_size * 2
         gcn_output_dim = word_input_dim
-
         # the changed place
+        # self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
+        # self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
         self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
-        self.aspect_attention = [DotprodAttention().to(args.device) for i in range(args.num_heads)]
-        self.aspect_attention2 = newDotprodAttention().to(args.device)
-        self.dep_attention = [RelationAttention(in_dim = gcn_output_dim).to(args.device) for i in range(args.num_heads)]
+        self.word_gcn = GCN(self.args, in_dim = word_input_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
+        self.aspect_attention = DotprodAttention().to(args.device)
+        self.aspect_attention2 = DotprodAttention().to(args.device)
+        self.dep_attention = newRelationAttention(in_dim = gcn_output_dim).to(args.device)
 
         # the last mlp part
         # gat_nomask_concat
@@ -776,19 +876,19 @@ class No_Reshaped_GAT_our(nn.Module):
         #########################################################
         # do thing about gat, the part changed
         adj = inputs_to_tree_reps(self.args, dep_heads,text_len,-1).to(self.args.device)
+        # adj, rel_adj = inputs_to_deprel_adj(self.args, dep_heads, dep_tags, text_len)
+        # rel_adj = rel_adj.to(self.args.device)
+        # rel_adj_V = self.dep_rel_embed(rel_adj.view(rel_adj.size(0), -1))
 
+        # dep_feature的计算方式有两种，一种用word_feature，一种不用
         dep_feature = self.dep_rel_embed(dep_tags)
         dep_feature = self.highway_dep(dep_feature)
         dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
-        new_feature = self.aspect_attention2(feature,aspect_feature,fmask)
-        
-        dep_feature = [g(new_feature,dep_feature,fmask).unsqueeze(1) for g in self.dep_attention]
-        dep_feature = torch.cat(dep_feature, dim=1)
-        dep_feature = dep_feature.mean(dim=1)
+        dep_feature = self.dep_attention(feature,dep_feature,fmask)
+        dep_feature = self.aspect_attention2(dep_feature,aspect_feature,fmask)
 
-        word_feature = [g(feature,aspect_feature,fmask).unsqueeze(1) for g in self.aspect_attention]
-        word_feature = torch.cat(word_feature, dim=1)
-        word_feature = word_feature.mean(dim=1)
+        word_feature,_ = self.word_gcn(adj,feature) #(B,L,D)
+        word_feature = self.aspect_attention(word_feature,aspect_feature,fmask)
 
         feature_out = torch.cat([dep_feature, word_feature], dim = 1) # (N, D')
         x = self.dropout(feature_out)
