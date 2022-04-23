@@ -5,7 +5,7 @@ module load anaconda/2021.05
 source activate mufiye_NLP
 
 # twitter train
-python train.py --num_train_epochs 100 --gat_noMix_our --dataset_name twitter --highway \
+python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name twitter --highway \
                 --per_gpu_train_batch_size 32 \
                 --hidden_size 100 --final_hidden_size 100 \
                 --num_mlps 2 \
