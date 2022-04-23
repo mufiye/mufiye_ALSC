@@ -71,6 +71,33 @@ class LinearAttention(nn.Module):
 
         return out
 
+# for dep feature
+class newDotprodAttention(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, feature, aspect_v, dmask):
+        '''
+        C feature/context [N, L, D]
+        Q dep_tags_v          [N, D]
+        mask dmask          [N, L]
+        '''
+
+        Q = aspect_v
+        Q = Q.unsqueeze(2)  # (N, D, 1)
+        dot_prod = torch.bmm(feature, Q)  # (N, L, 1)
+        dmask = dmask.unsqueeze(2)  # (N, D, 1)
+        attention_weight = mask_logits(dot_prod, dmask)  # (N, L ,1)
+        attention = F.softmax(attention_weight, dim=1)  # (N, L, 1)
+
+        # changed place
+        # feature与attention的权重做运算
+        print("the attention is: {}".format(attention))
+        print("the feature is: {}".format(feature))
+        out =  torch.mul(feature,attention) # (N, L, D)
+        print("the out result is: {}".format(out))
+        return out
+
 
 # question: torch.bmm()
 # question: make_logits()
