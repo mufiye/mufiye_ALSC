@@ -96,7 +96,7 @@ def parse_args():
     parser.add_argument('--num_gcn_layers', type=int, default=2,
                         help='Number of GCN layers.')
     # the gcn_mem_dim is temporary unuseful
-    parser.add_argument('--gcn_mem_dim', type=int, default=300,
+    parser.add_argument('--gcn_mem_dim', type=int, default=200,
                         help='Dimension of the W in GCN.')
     parser.add_argument('--gcn_dropout', type=float, default=0.2,
                         help='Dropout rate for GCN.')

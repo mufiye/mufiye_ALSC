@@ -526,7 +526,7 @@ class No_Reshaped_GAT_our(nn.Module):
         self.bilstm = nn.LSTM(input_size=args.embedding_dim, hidden_size=args.hidden_size,
                               bidirectional=True, batch_first=True, num_layers=args.num_layers)
         word_input_dim = args.hidden_size * 2
-        gcn_output_dim = args.hidden_size * 2
+        gcn_output_dim = word_input_dim
         # the changed place
         # self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
         # self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
@@ -538,7 +538,7 @@ class No_Reshaped_GAT_our(nn.Module):
 
         # the last mlp part
         # gat_nomask_concat
-        last_hidden_size = args.hidden_size * 4
+        last_hidden_size = gcn_output_dim * 2
 
         # gat_nomask_noconcat
         # last_hidden_size = args.hidden_size * 2
