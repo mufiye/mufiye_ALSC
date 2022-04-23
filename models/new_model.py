@@ -896,7 +896,7 @@ class No_Reshaped_GAT_Bert(nn.Module):
 #         logit = self.fc_final(x)
 #         return logit
 
-# new dep model v5
+# new dep model v6
 # change the attention place, remove word_gcn and merge the aspect attention
 class No_Reshaped_GAT_our(nn.Module):
     def __init__(self, args, dep_rel_num):
