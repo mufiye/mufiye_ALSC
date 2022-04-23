@@ -10,4 +10,5 @@ python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name twitte
                 --hidden_size 100 --final_hidden_size 100 \
                 --num_mlps 2 \
                 --dropout 0.5 \
-                --gcn_dropout 0.0
+                --gcn_dropout 0.0 \
+                --num_heads 9

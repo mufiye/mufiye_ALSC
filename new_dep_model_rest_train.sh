@@ -11,7 +11,8 @@ python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name rest -
                 --hidden_size 100 --final_hidden_size 100 \
                 --num_mlps 2 \
                 --dropout 0.7 \
-                --gcn_dropout 0.2
+                --gcn_dropout 0.2 \
+                --num_heads 7
                 
 
 # python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name rest --highway \
