@@ -489,12 +489,12 @@ class No_Reshaped_GAT_our(nn.Module):
         # dep_feature的计算方式有两种，一种用word_feature，一种不用
         dep_feature = self.dep_rel_embed(dep_tags)
         dep_feature = self.highway_dep(dep_feature)
-        dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
-        new_feature = self.aspect_attention2(feature,aspect_feature,fmask)
-        dep_feature = self.dep_attention(new_feature,dep_feature,fmask)
+        dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,dep_gcn_mem_dim)
+        new_feature = self.aspect_attention2(feature,aspect_feature,fmask) #(B,L,hidden_size*2)
+        dep_feature = self.dep_attention(new_feature,dep_feature,fmask) #(B,L,hidden_size*2)
 
-        word_feature,_ = self.word_gcn(adj,feature) #(B,L,D)
-        word_feature = self.aspect_attention(word_feature,aspect_feature,fmask)
+        word_feature,_ = self.word_gcn(adj,feature) #(B,L,word_gcn_mem_dim)
+        word_feature = self.aspect_attention(word_feature,aspect_feature,fmask) #(B,L,word_gcn_mem_dim)
 
         feature_out = torch.cat([dep_feature, word_feature], dim = 1) # (N, D')
         x = self.dropout(feature_out)
