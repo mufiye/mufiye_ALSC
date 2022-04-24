@@ -5,7 +5,7 @@ module load anaconda/2021.05
 source activate mufiye_NLP
 
 # laptop train
-python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name laptop --highway \
+python train.py --num_train_epochs 200 --gat_noReshape_our --dataset_name laptop --highway \
                 --per_gpu_train_batch_size 32 \
                 --hidden_size 400 --final_hidden_size 400 \
                 --gcn_mem_dim 200 \
