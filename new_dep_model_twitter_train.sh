@@ -7,7 +7,7 @@ source activate mufiye_NLP
 # twitter train
 python train.py --num_train_epochs 100 --gat_noReshape_our --dataset_name twitter --highway \
                 --per_gpu_train_batch_size 32 \
-                --hidden_size 100 --final_hidden_size 100 \
+                --hidden_size 200 --final_hidden_size 200 \
                 --num_mlps 2 \
                 --gcn_mem_dim 100 \
                 --dropout 0.3 \
