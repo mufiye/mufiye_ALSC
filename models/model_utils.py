@@ -109,8 +109,9 @@ class newDotprodAttention(nn.Module):
         '''
 
         Q = aspect_v
+        d = Q.shape[-1]
         Q = Q.unsqueeze(2)  # (N, D, 1)
-        dot_prod = torch.bmm(feature, Q)  # (N, L, 1)
+        dot_prod = torch.bmm(feature, Q) / math.sqrt(d) # (N, L, 1)
         dmask = dmask.unsqueeze(2)  # (N, D, 1)
         attention_weight = mask_logits(dot_prod, dmask)  # (N, L ,1)
         attention = F.softmax(attention_weight, dim=1)  # (N, L, 1)
