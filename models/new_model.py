@@ -431,11 +431,11 @@ class No_Reshaped_GAT_our(nn.Module):
         # the changed place
         # self.rel_gat = Rel_GAT(args, dep_rel_num = dep_rel_num, num_layers = args.num_gcn_layers).to(args.device)
         # self.gat = GAT(args, in_dim = gcn_input_dim, mem_dim = gcn_input_dim, num_layers = args.num_gcn_layers).to(args.device)
-        self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
+        self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = args.gcn_mem_dim, num_layers = args.num_gcn_layers).to(args.device)
         self.word_gcn = GCN(self.args, in_dim = word_input_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
         self.aspect_attention = DotprodAttention().to(args.device)
         self.aspect_attention2 = newDotprodAttention().to(args.device)
-        self.dep_attention = RelationAttention(in_dim = gcn_output_dim).to(args.device)
+        self.dep_attention = RelationAttention(in_dim = args.gcn_mem_dim).to(args.device)
 
         # the last mlp part
         # gat_nomask_concat
