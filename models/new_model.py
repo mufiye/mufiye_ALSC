@@ -897,7 +897,7 @@ class No_Reshaped_GAT_Bert(nn.Module):
 #         return logit
 
 # new dep model v6
-# change the attention place, remove word_gcn and merge the aspect attention
+# change the attention place, remove word_gcn, merge aspect attention
 class No_Reshaped_GAT_our(nn.Module):
     def __init__(self, args, dep_rel_num):
         super(No_Reshaped_GAT_our, self).__init__()
@@ -924,8 +924,7 @@ class No_Reshaped_GAT_our(nn.Module):
         gcn_output_dim = word_input_dim
         # the changed place
         self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
-        self.aspect_attention1 = DotprodAttention().to(args.device)
-        self.aspect_attention2 = DotprodAttention().to(args.device)
+        self.aspect_attention = DotprodAttention().to(args.device)
         self.dep_attention = newRelationAttention(in_dim = gcn_output_dim).to(args.device)
 
         # the last mlp part
@@ -979,9 +978,9 @@ class No_Reshaped_GAT_our(nn.Module):
         dep_feature = self.highway_dep(dep_feature)
         dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
         dep_feature = self.dep_attention(feature,dep_feature,fmask)
-        dep_feature = self.aspect_attention1(dep_feature,aspect_feature,fmask)
+        dep_feature = self.aspect_attention(dep_feature,aspect_feature,fmask)
 
-        word_feature = self.aspect_attention2(feature,aspect_feature,fmask)
+        word_feature = self.aspect_attention(feature,aspect_feature,fmask)
 
         feature_out = torch.cat([dep_feature, word_feature], dim = 1) # (N, D')
         x = self.dropout(feature_out)
