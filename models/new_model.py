@@ -635,14 +635,14 @@ class No_Reshaped_GAT_our(nn.Module):
         gcn_output_dim = word_input_dim
 
         # the changed place
-        self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = gcn_output_dim, num_layers = args.num_gcn_layers).to(args.device)
+        self.dep_gcn = GCN(self.args, in_dim = args.dep_relation_embed_dim, mem_dim = args.gcn_mem_dim, num_layers = args.num_gcn_layers).to(args.device)
         self.aspect_attention = DotprodAttention().to(args.device)
         self.aspect_attention2 = newDotprodAttention().to(args.device)
-        self.dep_attention = RelationAttention(in_dim = gcn_output_dim).to(args.device)
+        self.dep_attention = RelationAttention(in_dim = args.gcn_mem_dim).to(args.device)
 
         # the last mlp part
         # gat_nomask_concat
-        last_hidden_size = gcn_output_dim * 2
+        last_hidden_size = args.hidden_size * 4
 
         # gat_nomask_noconcat
         # last_hidden_size = args.hidden_size * 2
@@ -688,9 +688,9 @@ class No_Reshaped_GAT_our(nn.Module):
 
         dep_feature = self.dep_rel_embed(dep_tags)
         dep_feature = self.highway_dep(dep_feature)
-        dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
-        new_feature = self.aspect_attention2(feature,aspect_feature,fmask)
-        dep_feature = self.dep_attention(new_feature,dep_feature,fmask)
+        dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,gcn_mem_dim)
+        new_feature = self.aspect_attention2(feature,aspect_feature,fmask) #(B,L,args.hidden_size * 2)
+        dep_feature = self.dep_attention(new_feature,dep_feature,fmask) #(B,L,args.hidden_size * 2)
 
         word_feature = self.aspect_attention(feature,aspect_feature,fmask)
 
