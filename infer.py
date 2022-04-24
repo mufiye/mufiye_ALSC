@@ -341,99 +341,129 @@ def infering(text, aspect, model_choice=1, dataset_choice=1,use_cuda=False):
 
 
 if __name__ == '__main__':
+    #############################################
+    # this part is for test the available of 
+    # noMix model and bert-base model
+    #############################################
+
     # {'negative': 0, 'positive': 1, 'neutral': 2}
     # twitter case
     # positive
-    text_rest1 = "The bread is top notch as well."
-    aspect_rest1 = "bread"
-    # negative
-    text_rest2 = "In fact, this was not a Nicoise salad and was barely eatable."
-    aspect_rest2 = "Nicoise salad"
-    # neutral
-    text_rest3 = "The pizza is the best if you like thin crusted pizza."
-    aspect_rest3 = "thin crusted pizza"
+    # text_rest1 = "The bread is top notch as well."
+    # aspect_rest1 = "bread"
+    # # negative
+    # text_rest2 = "In fact, this was not a Nicoise salad and was barely eatable."
+    # aspect_rest2 = "Nicoise salad"
+    # # neutral
+    # text_rest3 = "The pizza is the best if you like thin crusted pizza."
+    # aspect_rest3 = "thin crusted pizza"
 
-    # laptop case
-    # positive
-    text_laptop1 = "Boot time is super fast, around anywhere from 35 seconds to 1 minute."
-    aspect_laptop1 = "Boot time"
-    # negative
-    text_laptop2 = "I can barely use any usb devices because they will not stay connected properly."
-    aspect_laptop2 = "usb devices"
-    # neutral
-    text_laptop3 = "I took it back for an Asus and same thing- blue screen which required me to remove the battery to reset."
-    aspect_laptop3 = "battery"
+    # # laptop case
+    # # positive
+    # text_laptop1 = "Boot time is super fast, around anywhere from 35 seconds to 1 minute."
+    # aspect_laptop1 = "Boot time"
+    # # negative
+    # text_laptop2 = "I can barely use any usb devices because they will not stay connected properly."
+    # aspect_laptop2 = "usb devices"
+    # # neutral
+    # text_laptop3 = "I took it back for an Asus and same thing- blue screen which required me to remove the battery to reset."
+    # aspect_laptop3 = "battery"
 
-    # twitter case
-    # positive
-    text_twitter1 = "3 by britney spears is an amazing song"
-    aspect_twitter1 = "britney spears"
-    # negative
-    text_twitter2 = "God damn . That Sony remote for google is fucking hideeeeeous !"
-    aspect_twitter2 = "google"
-    # neutral
-    text_twitter3 = "my 3-year-old was amazed yesterday to find that ' real ' 10 pin bowling is nothing like it is on the wii ..."
-    aspect_twitter3 = "wii"
+    # # twitter case
+    # # positive
+    # text_twitter1 = "3 by britney spears is an amazing song"
+    # aspect_twitter1 = "britney spears"
+    # # negative
+    # text_twitter2 = "God damn . That Sony remote for google is fucking hideeeeeous !"
+    # aspect_twitter2 = "google"
+    # # neutral
+    # text_twitter3 = "my 3-year-old was amazed yesterday to find that ' real ' 10 pin bowling is nothing like it is on the wii ..."
+    # aspect_twitter3 = "wii"
 
     # model choice为1或2, dataset choice为1~3
-    print("---------------------------------------------------")
-    print("for test rest noMix model")
-    result = infering(text_rest1, aspect_rest1, 1, 1, False)
-    print("the result is: {}".format(result))
-    result = infering(text_rest2, aspect_rest2, 1, 1, False)
-    print("the result is: {}".format(result))
-    result = infering(text_rest3, aspect_rest3, 1, 1, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # print("for test rest noMix model")
+    # result = infering(text_rest1, aspect_rest1, 1, 1, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_rest2, aspect_rest2, 1, 1, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_rest3, aspect_rest3, 1, 1, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
 
-    print("---------------------------------------------------")
-    print("for test laptop noMix model")
-    result = infering(text_laptop1, aspect_laptop1, 1, 2, False)
-    print("the result is: {}".format(result))
-    result = infering(text_laptop2, aspect_laptop2, 1, 2, False)
-    print("the result is: {}".format(result))
-    result = infering(text_laptop3, aspect_laptop3, 1, 2, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # print("for test laptop noMix model")
+    # result = infering(text_laptop1, aspect_laptop1, 1, 2, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_laptop2, aspect_laptop2, 1, 2, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_laptop3, aspect_laptop3, 1, 2, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
 
-    print("---------------------------------------------------")
-    print("for test twitter noMix model")
-    result = infering(text_twitter1, aspect_twitter1, 1, 3, False)
-    print("the result is: {}".format(result))
-    result = infering(text_twitter2, aspect_twitter2, 1, 3, False)
-    print("the result is: {}".format(result))
-    result = infering(text_twitter3, aspect_twitter3, 1, 3, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # print("for test twitter noMix model")
+    # result = infering(text_twitter1, aspect_twitter1, 1, 3, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_twitter2, aspect_twitter2, 1, 3, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_twitter3, aspect_twitter3, 1, 3, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
 
-    print("---------------------------------------------------")
-    print("for test rest bert-base model")
-    result = infering(text_rest1, aspect_rest1, 2, 1, False)
-    print("the result is: {}".format(result))
-    result = infering(text_rest2, aspect_rest2, 2, 1, False)
-    print("the result is: {}".format(result))
-    result = infering(text_rest3, aspect_rest3, 2, 1, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # print("for test rest bert-base model")
+    # result = infering(text_rest1, aspect_rest1, 2, 1, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_rest2, aspect_rest2, 2, 1, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_rest3, aspect_rest3, 2, 1, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
     
+    # print("---------------------------------------------------")
+    # print("for test laptop bert-base model")
+    # result = infering(text_laptop1, aspect_laptop1, 2, 2, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_laptop2, aspect_laptop2, 2, 2, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_laptop3, aspect_laptop3, 2, 2, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
+
+    # print("---------------------------------------------------")
+    # print("for test twitter bert-base model")
+    # result = infering(text_twitter1, aspect_twitter1, 2, 3, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_twitter2, aspect_twitter2, 2, 3, False)
+    # print("the result is: {}".format(result))
+    # result = infering(text_twitter3, aspect_twitter3, 2, 3, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
+
+    #############################################
+    # this part is for showing the 
+    # aspect attention and relation attention weight
+    # of noMix model and bert-base model
+    #############################################
+
+    # first try for noMix model
+    # result1: 
+    # relation attention weight显示关注的是outstanding,little和were bad
+    # aspect attention weight显示
+    # food的aspect attention weight关注的是前半句(但不是全在outstanding上)
+    # perks的aspect attention weight关注的是后半句上,主要是在bad上
+    text_rest = "Although the food was outstanding, but the little 'perks' were bad."
+    aspect_rest1 = "food"
+    aspect_rest2 = "perks"
+
     print("---------------------------------------------------")
-    print("for test laptop bert-base model")
-    result = infering(text_laptop1, aspect_laptop1, 2, 2, False)
-    print("the result is: {}".format(result))
-    result = infering(text_laptop2, aspect_laptop2, 2, 2, False)
-    print("the result is: {}".format(result))
-    result = infering(text_laptop3, aspect_laptop3, 2, 2, False)
+    result = infering(text_rest, aspect_rest1, 1, 1, False)
     print("the result is: {}".format(result))
     print("---------------------------------------------------")
 
     print("---------------------------------------------------")
-    print("for test twitter bert-base model")
-    result = infering(text_twitter1, aspect_twitter1, 2, 3, False)
-    print("the result is: {}".format(result))
-    result = infering(text_twitter2, aspect_twitter2, 2, 3, False)
-    print("the result is: {}".format(result))
-    result = infering(text_twitter3, aspect_twitter3, 2, 3, False)
+    result = infering(text_rest, aspect_rest2, 1, 1, False)
     print("the result is: {}".format(result))
     print("---------------------------------------------------")
-
 
