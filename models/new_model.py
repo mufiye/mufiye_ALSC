@@ -1172,7 +1172,7 @@ class No_Reshaped_GAT_our(nn.Module):
         dep_feature,_ = self.dep_gcn(adj,dep_feature) #(B,L,D)
         dep_feature = self.dep_attention(feature,dep_feature,fmask)
         
-        dep_feature = self.aspect_attention(dep_feature,aspect_feature,fmask).unsqueeze(1)
+        dep_feature = self.aspect_attention(dep_feature,aspect_feature,fmask)
 
         x = self.dropout(dep_feature)
         x = self.fcs(x)
