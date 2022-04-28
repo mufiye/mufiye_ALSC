@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Aspect Based Sentiment Classification</title>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'ALSC_infer/bootstrap-5.1.3-dist/css/bootstrap.min.css' %}">
+    <script type="text/javascript"
+        src="{% static 'ALSC_infer/bootstrap-5.1.3-dist/js/bootstrap.bundle.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'ALSC_infer/jquery/jquery-3.6.0.min.js' %}"></script>
+    <script type="text/javascript">
+        function validateForm() {
+            var sentence = document.forms["myForm"]["sentence"].value;
+            var aspect = document.forms["myForm"]["aspect"].value;
+            if (sentence == null || sentence == "") {
+                alert("the sentence must be filled");
+                return false;
+            }
+            if (aspect == null || aspect == "") {
+                alert("the aspect must be filled");
+                return false;
+            }
+            //验证sentence中包含了aspect
+            if (!sentence.includes(aspect)) {
+                alert("the sentence must include aspect");
+                return false;
+            }
+        }
+
+        // 不用ajax了
+        // $('#doInfer').click(function () {
+        //     // 朝后端发送ajax请求
+        //     alert("into click function");
+        //     $.ajax({
+        //         // 1.指定朝哪个后端发送ajax请求
+        //         url: '', //不写就是朝当前地址提交【与form表单的action参数相同】
+        //         // 2.请求方式
+        //         type: 'post',  // 不指定默认就是get，都是小写
+        //         // 3.数据
+        //         data: { 'sentence': $('#sentence').val(), 'aspect': $('#aspect').val() },
+        //         // 4.回调函数:当后端给你返回结果的时候会自动触发，args接受后端的返回结果
+        //         success: function (args) {
+        //             $('#result').val(args)
+        //         }
+        //     })
+        // })
+    </script>
+</head>
+
+<body>
+    <div class=".container-fluid">
+        <!--question: 如何设置导航栏的高度-->
+        <!--question: 如何导航栏增加一个边框以及颜色设置为白色-->
+        <nav class="navbar bg-dark navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Aspect Level Sentiment Classification</a>
+            </div>
+        </nav>
+        <!-- <nav class="navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Navbar</span>
+            </div>
+        </nav> -->
+        <form name="myForm" action="" method="post" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <div class="row mt-5 mb-3">
+                <div class="col-lg-1"></div>
+                <!--question: 如何设置下拉框使其正常出现-->
+                <!--question: 如何设置下拉框的颜色(白色)-->
+                <!--选择菜单的空间(model)-->
+                <div class="col-lg-2">
+                    <select id="model" name="model" class="form-select">
+                        {% if model_choice == 1 %}
+                        <option selected>non-BERT</option>
+                        {% else %}
+                        <option>non-BERT</option>
+                        {% endif %}
+                        {% if model_choice == 2 %}
+                        <option selected>BERT-base</option>
+                        {% else %}
+                        <option>BERT-base</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <!--选择菜单的空间(dataset)-->
+                <div class="col-lg-2">
+                    <select id="dataset" name="dataset" class="form-select">
+                        {% if dataset_choice == 1 %}
+                        <option selected>rest</option>
+                        {% else %}
+                        <option>rest</option>
+                        {% endif %}
+                        {% if dataset_choice == 2 %}
+                        <option selected>laptop</option>
+                        {% else %}
+                        <option>laptop</option>
+                        {% endif %}
+                        {% if dataset_choice == 3 %}
+                        <option selected>twitter</option>
+                        {% else %}
+                        <option>twitter</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <!--设置按钮的颜色为白色-->
+                <div class="col-lg-4"></div>
+                <div class="col-lg-2 d-grid">
+                    <button type="submit" id="doInfer" class="btn btn-dark">情感分析</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-1"></div>
+                <div class="col-lg-5">
+                    <!--question: 如何将文本框的圆角设置得更好看得一些-->
+                    <!--question(OK?): 如何将文本框的颜色设置为灰色-->
+                    <!--textarea如果尺寸不对可以调整width和height-->
+                    <textarea class="form-control mb-2" rows="6" id="sentence" name="sentence"
+                        placeholder="please input the sentence"
+                        style="resize: none; background-color: #f2f2f2;">{% if sentence %}{{sentence}}{% endif %}</textarea>
+
+                    <textarea class="form-control mt-2" rows="6" id="aspect" name="aspect"
+                        placeholder="please input the aspect"
+                        style="resize: none; background-color: #f2f2f2;">{% if aspect %}{{aspect}}{% endif %}</textarea>
+                </div>
+                <div class="col-lg-5">
+
+                    <textarea class="form-control" rows="13" id="result" name="result"
+                        style="resize: none; background-color: #f2f2f2;">{% if result %}{{result}}{% endif %}</textarea>
+                </div>
+                <div class="col-lg-1"></div>
+            </div>
+        </form>
+        <!--question: 页脚可以放置一些模型的相关信息-->
+        <div class="row mt-5 mb-5">
+            <span></span>
+        </div>
+        <div class="row mt-5 p-4 text-dark text-center border-top">
+            <div class="col-lg">
+                <p>Research and implementation of text-based aspect level sentiment analysis method</p>
+                <p>[2022] [浙江工业大学] [叶梦飞]</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
