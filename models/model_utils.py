@@ -27,10 +27,11 @@ class RelationAttention(nn.Module):
         Q = Q.squeeze(2)
         Q = F.softmax(mask_logits(Q, dmask), dim=1)
 
+        # attention experiment
         # for show the attention weight in RelationAttention
-        print("------------------------------------------------------------------")
-        print("the attention weight in relationAttention is: {}".format(Q))
-        print("------------------------------------------------------------------")
+        # print("------------------------------------------------------------------")
+        # print("the attention weight in relationAttention is: {}".format(Q))
+        # print("------------------------------------------------------------------")
 
         Q = Q.unsqueeze(2) # (N, L, 1)
         out = torch.bmm(feature.transpose(1, 2), Q) # (N, D, L) * (N, L, 1)
@@ -97,10 +98,11 @@ class DotprodAttention(nn.Module):
         attention_weight = mask_logits(dot_prod, dmask)  # (N, L ,1)
         attention = F.softmax(attention_weight, dim=1)  # (N, L, 1)
 
+        # attention experiment
         # for show the attention weight in aspect Attention
-        print("------------------------------------------------------------------")
-        print("the attention weight in aspect Attention is: {}".format(attention))
-        print("------------------------------------------------------------------")
+        # print("------------------------------------------------------------------")
+        # print("the attention weight in aspect Attention is: {}".format(attention))
+        # print("------------------------------------------------------------------")
 
         out = torch.bmm(feature.transpose(1, 2), attention)  # (N, D, 1)
         out = out.squeeze(2)
