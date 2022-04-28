@@ -30,7 +30,9 @@ from spacy.tokens import Doc
 from spacy.matcher import Matcher
 
 logger = logging.getLogger(__name__)
-
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.INFO)
 class WhitespaceTokenizer(object):
     def __init__(self, vocab):
         self.vocab = vocab
@@ -47,32 +49,228 @@ nlp = spacy.load('en_core_web_sm')
 matcher = Matcher(nlp.vocab)
 
 class Inferer:
-    def __init__(self, opt):
-        self.opt = opt
-        # 根据model class以及opt参数设置model
-        if self.opt.model_choice == 1:
-            self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
-            embedding = torch.from_numpy(np.asarray(self.word_vecs, dtype=np.float32))
-            self.opt.glove_embedding = embedding
-            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'])
-            self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
-            self.model = self.model.to(self.opt.device)
-        elif self.opt.model_choice == 2:
-            self.word_vecs, self.word_vocab, self.dep_tag_vocab, self.pos_tag_vocab = load_and_cache_vocabs_vectors(None, self.opt)
-            self.model = self.opt.model_class(self.opt, self.dep_tag_vocab['len'])
-            self.model.load_state_dict(torch.load(self.opt.state_dict_path,map_location=torch.device(self.opt.device)))
-            self.model = self.model.to(self.opt.device)
-            tokenizer = BertTokenizer.from_pretrained(opt.bert_model_dir)
-            self.opt.tokenizer = tokenizer
+    def __init__(self):
+        # init中实现模型预加载
+        model_classes = {
+            'gat_noMix': No_Mix_GAT_our,
+            'gat_bert': No_Reshaped_GAT_Bert,
+        }
 
-        # switch model to evaluation mode
-        self.model.eval()
+        class Option(object): pass
+        self.noMix_rest_opt = Option()
+        self.noMix_laptop_opt = Option()
+        self.noMix_twitter_opt = Option()
+        self.bert_base_rest_opt = Option()
+        self.bert_base_laptop_opt = Option()
+        self.bert_base_twitter_opt = Option()
+        
+        self.noMix_rest_opt.inInfer = True
+        self.noMix_laptop_opt.inInfer = True
+        self.noMix_twitter_opt.inInfer = True
+        self.bert_base_rest_opt.inInfer = True
+        self.bert_base_laptop_opt.inInfer = True
+        self.bert_base_twitter_opt.inInfer = True
+
+        self.noMix_rest_opt.dataset_name = 'rest'
+        self.noMix_laptop_opt.dataset_name = 'laptop'
+        self.noMix_twitter_opt.dataset_name = 'twitter'
+        self.bert_base_rest_opt.dataset_name = 'rest'
+        self.bert_base_laptop_opt.dataset_name = 'laptop'
+        self.bert_base_twitter_opt.dataset_name = 'twitter'
+
+        self.noMix_rest_opt.model_class = model_classes['gat_noMix']
+        self.noMix_laptop_opt.model_class = model_classes['gat_noMix']
+        self.noMix_twitter_opt.model_class = model_classes['gat_noMix']
+        self.bert_base_rest_opt.model_class = model_classes['gat_bert']
+        self.bert_base_laptop_opt.model_class = model_classes['gat_bert']
+        self.bert_base_twitter_opt.model_class = model_classes['gat_bert']
+
+        self.noMix_rest_opt.highway = True
+        self.noMix_laptop_opt.highway = True
+        self.noMix_twitter_opt.highway = True
+        self.bert_base_rest_opt.highway = False
+        self.bert_base_laptop_opt.highway = False
+        self.bert_base_twitter_opt.highway = False
+
+        self.noMix_rest_opt.embedding_type = 'glove'
+        self.noMix_laptop_opt.embedding_type = 'glove'
+        self.noMix_twitter_opt.embedding_type = 'glove'
+        self.bert_base_rest_opt.embedding_type = 'bert'
+        self.bert_base_laptop_opt.embedding_type = 'bert'
+        self.bert_base_twitter_opt.embedding_type = 'bert'
+        
+        self.noMix_rest_opt.glove_dir = './datasets/Glove'
+        self.noMix_laptop_opt.glove_dir = './datasets/Glove'
+        self.noMix_twitter_opt.glove_dir = './datasets/Glove'
+        self.bert_base_rest_opt.bert_model_dir = 'models/bert_base'
+        self.bert_base_laptop_opt.bert_model_dir = 'models/bert_base'
+        self.bert_base_twitter_opt.bert_model_dir = 'models/bert_base'
+
+        self.noMix_rest_opt.num_gcn_layers = 2
+        self.noMix_laptop_opt.num_gcn_layers = 2
+        self.noMix_twitter_opt.num_gcn_layers = 2
+        self.bert_base_rest_opt.num_gcn_layers = 2
+        self.bert_base_laptop_opt.num_gcn_layers = 2
+        self.bert_base_twitter_opt.num_gcn_layers = 2
+
+        self.noMix_rest_opt.embedding_dim = 300
+        self.noMix_laptop_opt.embedding_dim = 300
+        self.noMix_twitter_opt.embedding_dim = 300
+
+        self.noMix_rest_opt.dep_relation_embed_dim = 300
+        self.noMix_laptop_opt.dep_relation_embed_dim = 300
+        self.noMix_twitter_opt.dep_relation_embed_dim = 300
+        self.bert_base_rest_opt.dep_relation_embed_dim = 300
+        self.bert_base_laptop_opt.dep_relation_embed_dim = 300
+        self.bert_base_twitter_opt.dep_relation_embed_dim = 300
+
+        self.noMix_rest_opt.hidden_size = 100
+        self.noMix_laptop_opt.hidden_size = 100
+        self.noMix_twitter_opt.hidden_size = 100
+
+        self.noMix_rest_opt.final_hidden_size = 100
+        self.noMix_laptop_opt.final_hidden_size = 100
+        self.noMix_twitter_opt.final_hidden_size = 100
+        self.bert_base_rest_opt.final_hidden_size = 256
+        self.bert_base_laptop_opt.final_hidden_size = 256
+        self.bert_base_twitter_opt.final_hidden_size = 256
+
+        self.noMix_rest_opt.num_classes = 3
+        self.noMix_laptop_opt.num_classes = 3
+        self.noMix_twitter_opt.num_classes = 3
+        self.bert_base_rest_opt.num_classes = 3
+        self.bert_base_laptop_opt.num_classes = 3
+        self.bert_base_twitter_opt.num_classes = 3
+
+        self.noMix_rest_opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_rest.pth'
+        self.noMix_laptop_opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_laptop.pth'
+        self.noMix_twitter_opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_twitter.pth'
+        self.bert_base_rest_opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_rest.pth'
+        self.bert_base_laptop_opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_laptop.pth'
+        self.bert_base_twitter_opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_twitter.pth'
+
+        self.noMix_rest_opt.num_layers = 1
+        self.noMix_laptop_opt.num_layers = 2
+        self.noMix_twitter_opt.num_layers = 1
+        
+        self.noMix_rest_opt.num_mlps = 2
+        self.noMix_laptop_opt.num_mlps = 3
+        self.noMix_twitter_opt.num_mlps = 2
+        self.bert_base_rest_opt.num_mlps = 2
+        self.bert_base_laptop_opt.num_mlps = 3
+        self.bert_base_twitter_opt.num_mlps = 2
+
+        self.noMix_rest_opt.dropout = 0.8
+        self.noMix_laptop_opt.dropout = 0.7
+        self.noMix_twitter_opt.dropout = 0.5
+        self.bert_base_rest_opt.dropout = 0.3
+        self.bert_base_laptop_opt.dropout = 0.0
+        self.bert_base_twitter_opt.dropout = 0.0
+
+        self.noMix_rest_opt.gcn_dropout = 0.2
+        self.noMix_laptop_opt.gcn_dropout = 0.8
+        self.noMix_twitter_opt.gcn_dropout = 0.0
+        self.bert_base_rest_opt.gcn_dropout = 0.3
+        self.bert_base_laptop_opt.gcn_dropout = 0.5
+        self.bert_base_twitter_opt.gcn_dropout = 0.2
+        
+        self.if_cuda = False
+        self.device = torch.device('cuda' if self.if_cuda and torch.cuda.is_available() else 'cpu')    
+        logger.info('Device is %s', self.device)
+
+        self.noMix_rest_opt.device = self.device
+        self.noMix_laptop_opt.device = self.device
+        self.noMix_twitter_opt.device = self.device
+        self.bert_base_rest_opt.device = self.device
+        self.bert_base_laptop_opt.device = self.device
+        self.bert_base_twitter_opt.device = self.device
+        
+        # noMix_rest
+        self.word_vecs_noMix_rest, self.word_vocab_noMix_rest, self.dep_tag_vocab_noMix_rest, self.pos_tag_vocab_noMix_rest = load_and_cache_vocabs_vectors(None, self.noMix_rest_opt)
+        self.noMix_rest_opt.glove_embedding = torch.from_numpy(np.asarray(self.word_vecs_noMix_rest, dtype=np.float32))
+        self.noMix_rest_model = self.noMix_rest_opt.model_class(self.noMix_rest_opt, self.dep_tag_vocab_noMix_rest['len'])
+        self.noMix_rest_model.load_state_dict(torch.load(self.noMix_rest_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.noMix_rest_model = self.noMix_rest_model.to(self.device)
+        self.noMix_rest_model.eval()
+        
+        # noMix_laptop
+        self.word_vecs_noMix_laptop, self.word_vocab_noMix_laptop, self.dep_tag_vocab_noMix_laptop, self.pos_tag_vocab_noMix_laptop = load_and_cache_vocabs_vectors(None, self.noMix_laptop_opt)
+        self.noMix_laptop_opt.glove_embedding = torch.from_numpy(np.asarray(self.word_vecs_noMix_laptop, dtype=np.float32))
+        self.noMix_laptop_model = self.noMix_laptop_opt.model_class(self.noMix_laptop_opt, self.dep_tag_vocab_noMix_laptop['len'])
+        self.noMix_laptop_model.load_state_dict(torch.load(self.noMix_laptop_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.noMix_laptop_model = self.noMix_laptop_model.to(self.device)
+        self.noMix_laptop_model.eval()
+
+        # noMix_twitter
+        self.word_vecs_noMix_twitter, self.word_vocab_noMix_twitter, self.dep_tag_vocab_noMix_twitter, self.pos_tag_vocab_noMix_twitter = load_and_cache_vocabs_vectors(None, self.noMix_twitter_opt)
+        self.noMix_twitter_opt.glove_embedding = torch.from_numpy(np.asarray(self.word_vecs_noMix_twitter, dtype=np.float32))
+        self.noMix_twitter_model = self.noMix_twitter_opt.model_class(self.noMix_twitter_opt, self.dep_tag_vocab_noMix_twitter['len'])
+        self.noMix_twitter_model.load_state_dict(torch.load(self.noMix_twitter_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.noMix_twitter_model = self.noMix_twitter_model.to(self.device)
+        self.noMix_twitter_model.eval()
+
+        # bert_base_rest
+        self.word_vecs_bert_base_rest, self.word_vocab_bert_base_rest, self.dep_tag_vocab_bert_base_rest, self.pos_tag_vocab_bert_base_rest = load_and_cache_vocabs_vectors(None, self.bert_base_rest_opt)
+        self.bert_base_rest_model =  self.bert_base_rest_opt.model_class(self.bert_base_rest_opt, self.dep_tag_vocab_bert_base_rest['len'])
+        self.bert_base_rest_model.load_state_dict(torch.load(self.bert_base_rest_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.bert_base_rest_model = self.bert_base_rest_model.to(self.device)
+        self.bert_base_rest_opt.tokenizer = BertTokenizer.from_pretrained(self.bert_base_rest_opt.bert_model_dir)
+        self.bert_base_rest_model.eval()
+
+        # bert_base_laptop
+        self.word_vecs_bert_base_laptop, self.word_vocab_bert_base_laptop, self.dep_tag_vocab_bert_base_laptop, self.pos_tag_vocab_bert_base_laptop = load_and_cache_vocabs_vectors(None, self.bert_base_laptop_opt)
+        self.bert_base_laptop_model =  self.bert_base_laptop_opt.model_class(self.bert_base_laptop_opt, self.dep_tag_vocab_bert_base_laptop['len'])
+        self.bert_base_laptop_model.load_state_dict(torch.load(self.bert_base_laptop_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.bert_base_laptop_model = self.bert_base_laptop_model.to(self.device)
+        self.bert_base_laptop_opt.tokenizer = BertTokenizer.from_pretrained(self.bert_base_laptop_opt.bert_model_dir)
+        self.bert_base_laptop_model.eval()
+
+        # bert_base_twitter
+        self.word_vecs_bert_base_twitter, self.word_vocab_bert_base_twitter, self.dep_tag_vocab_bert_base_twitter, self.pos_tag_vocab_bert_base_twitter = load_and_cache_vocabs_vectors(None, self.bert_base_twitter_opt)
+        self.bert_base_twitter_model =  self.bert_base_twitter_opt.model_class(self.bert_base_twitter_opt, self.dep_tag_vocab_bert_base_twitter['len'])
+        self.bert_base_twitter_model.load_state_dict(torch.load(self.bert_base_twitter_opt.state_dict_path,map_location=torch.device(self.device)))
+        self.bert_base_twitter_model = self.bert_base_twitter_model.to(self.device)
+        self.bert_base_twitter_opt.tokenizer = BertTokenizer.from_pretrained(self.bert_base_twitter_opt.bert_model_dir)
+        self.bert_base_twitter_model.eval()
+        
         torch.autograd.set_grad_enabled(False)
 
     
-    def evaluate(self, text, aspect):
+    def evaluate(self, text, aspect, model_choice=1, dataset_choice=1, use_cuda=False):
         # 1. 语法解析并将数据变为json数据集的格式
         # (暂时先用spacy库的语法解析方法，未来或许可以替换为别的更好的方法)
+        if model_choice == 1:
+            if dataset_choice == 1:
+                self.opt = self.noMix_rest_opt
+                self.word_vocab = self.word_vocab_noMix_rest
+                self.dep_tag_vocab = self.dep_tag_vocab_noMix_rest
+                self.pos_tag_vocab = self.pos_tag_vocab_noMix_rest
+            elif dataset_choice == 2:
+                self.opt = self.noMix_laptop_opt
+                self.word_vocab = self.word_vocab_noMix_laptop
+                self.dep_tag_vocab = self.dep_tag_vocab_noMix_laptop
+                self.pos_tag_vocab = self.pos_tag_vocab_noMix_laptop
+            else:
+                self.opt = self.noMix_twitter_opt
+                self.word_vocab = self.word_vocab_noMix_twitter
+                self.dep_tag_vocab = self.dep_tag_vocab_noMix_twitter
+                self.pos_tag_vocab = self.pos_tag_vocab_noMix_twitter
+        else:
+            if dataset_choice == 1:
+                self.opt = self.bert_base_rest_opt
+                self.word_vocab = self.word_vocab_bert_base_rest
+                self.dep_tag_vocab = self.dep_tag_vocab_bert_base_rest
+                self.pos_tag_vocab = self.pos_tag_vocab_bert_base_rest
+            elif dataset_choice == 2:
+                self.opt = self.bert_base_laptop_opt
+                self.word_vocab = self.word_vocab_bert_base_laptop
+                self.dep_tag_vocab = self.dep_tag_vocab_bert_base_laptop
+                self.pos_tag_vocab = self.pos_tag_vocab_bert_base_laptop
+            else:
+                self.opt = self.bert_base_twitter_opt
+                self.word_vocab = self.word_vocab_bert_base_twitter
+                self.dep_tag_vocab = self.dep_tag_vocab_bert_base_twitter
+                self.pos_tag_vocab = self.pos_tag_vocab_bert_base_twitter
         json_data = []
         doc = nlp(text)
         doc_aspect = nlp(aspect)
@@ -218,9 +416,23 @@ class Inferer:
                         'aspect_len': items_tensor[9],
                         'dep_heads': items_tensor[11],
                         'aspect_position': items_tensor[12]}
-        t_outputs = self.model(**inputs)
-        t_probs = F.softmax(t_outputs, dim=-1).cpu().numpy()
-
+        if model_choice == 1:
+            if dataset_choice == 1:
+                t_outputs = self.noMix_rest_model(**inputs)
+            elif dataset_choice == 2:
+                t_outputs = self.noMix_laptop_model(**inputs)
+            else:
+                t_outputs = self.noMix_twitter_model(**inputs)
+        else:
+            if dataset_choice == 1:
+                t_outputs = self.bert_base_rest_model(**inputs)
+            elif dataset_choice == 2:
+                t_outputs = self.bert_base_laptop_model(**inputs)
+            else:
+                t_outputs = self.bert_base_twitter_model(**inputs)
+        t_probs = F.softmax(t_outputs, dim=-1).detach().numpy()
+        t_probs = t_probs.argmax(axis=-1).item()
+        print("t_probs's type is {}".format(type(t_probs)))
         return t_probs
 
 '''
@@ -229,95 +441,13 @@ refer from https://github.com/songyouwei/ABSA-PyTorch/blob/master/infer_example.
 
 def infering(text, aspect, model_choice=1, dataset_choice=1,use_cuda=False):
     # setup logging
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-                        datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO)
     # 已补全: model_classes, 指模型名称及其对应的class
-    model_classes = {
-        'gat_noMix': No_Mix_GAT_our,
-        'gat_bert': No_Reshaped_GAT_Bert,
-    }
-
-    # 已补全: Option对象
-    class Option(object): pass
-    opt=Option()
-    opt.inInfer = True
-    opt.model_choice = model_choice
-    if dataset_choice == 1:
-        opt.dataset_name = 'rest'
-    elif dataset_choice == 2:
-        opt.dataset_name = 'laptop'
-    else:
-        opt.dataset_name = 'twitter'
-    if use_cuda:
-        opt.if_cuda = True
-    else:
-        opt.if_cuda = False
-    if opt.model_choice == 1:
-        # about model parameters
-        opt.model_class = model_classes['gat_noMix']
-        opt.highway = True
-        opt.embedding_type = 'glove'
-        opt.glove_dir = './datasets/Glove'
-        opt.num_gcn_layers = 2
-        opt.embedding_dim = 300
-        opt.dep_relation_embed_dim = 300
-        opt.hidden_size = 100
-        opt.final_hidden_size = 100
-        opt.num_classes = 3
-        if opt.dataset_name == 'rest':
-            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_rest.pth'
-            opt.num_layers = 1
-            opt.num_mlps = 2
-            opt.dropout = 0.8
-            opt.gcn_dropout = 0.2
-        elif opt.dataset_name == 'laptop':
-            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_laptop.pth'
-            opt.num_layers = 2
-            opt.num_mlps = 3
-            opt.dropout = 0.7
-            opt.gcn_dropout = 0.8
-        elif opt.dataset_name == 'twitter':
-            opt.state_dict_path = 'saved_models/noMix_model/gat_noMix_our_twitter.pth'
-            opt.num_layers = 1
-            opt.num_mlps = 2
-            opt.dropout = 0.5
-            opt.gcn_dropout = 0.0
-    elif opt.model_choice == 2:
-        # about model parameters
-        opt.model_class = model_classes['gat_bert']
-        opt.highway = False
-        opt.embedding_type = 'bert'
-        opt.bert_model_dir = 'models/bert_base'
-        opt.num_gcn_layers = 2
-        opt.dep_relation_embed_dim = 300
-        opt.final_hidden_size = 256
-        opt.num_classes = 3
-        if opt.dataset_name == 'rest':
-            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_rest.pth'
-            opt.num_mlps = 2
-            opt.dropout = 0.3
-            opt.gcn_dropout = 0.3
-        elif opt.dataset_name == 'laptop':
-            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_laptop.pth'
-            opt.num_mlps = 3
-            opt.dropout = 0.0
-            opt.gcn_dropout = 0.5
-        elif opt.dataset_name == 'twitter':
-            opt.state_dict_path = 'saved_models/bert_base_model/gat_bert_base_twitter.pth'
-            opt.num_mlps = 2
-            opt.dropout = 0.0
-            opt.gcn_dropout = 0.2
-
-    # 关于用于infer的设备
-    device = torch.device('cuda' if opt.if_cuda and torch.cuda.is_available() else 'cpu')    
-    opt.device = device
-    logger.info('Device is %s', opt.device)
+    
 
     # 测试代码1：测试语法解析是否正确
     # inf.evaluate('Two wasted steaks -- what a crime!', 'steaks')
 
-    inf = Inferer(opt)
+    
     # {'negative': 0, 'positive': 1, 'neutral': 2}
     # 第一组测试：正确答案为negative
     # t_probs = inf.evaluate('the service is terrible', 'service')
@@ -336,7 +466,7 @@ def infering(text, aspect, model_choice=1, dataset_choice=1,use_cuda=False):
     # print(t_probs.argmax(axis=-1))
 
     # 第五组测试：正确答案为positive
-    t_probs = inf.evaluate(text, aspect)
+    t_probs = inf.evaluate(text, aspect,model_choice, dataset_choice)
     return t_probs.argmax(axis=-1).item()
 
 
@@ -346,100 +476,102 @@ if __name__ == '__main__':
     # noMix model and bert-base model
     #############################################
 
+    # 推理器初始化
+    inf = Inferer()
     # {'negative': 0, 'positive': 1, 'neutral': 2}
+    # rest case
+    # positive
+    text_rest1 = "The bread is top notch as well."
+    aspect_rest1 = "bread"
+    # negative
+    text_rest2 = "In fact, this was not a Nicoise salad and was barely eatable."
+    aspect_rest2 = "Nicoise salad"
+    # neutral
+    text_rest3 = "The pizza is the best if you like thin crusted pizza."
+    aspect_rest3 = "thin crusted pizza"
+
+    # laptop case
+    # positive
+    text_laptop1 = "Boot time is super fast, around anywhere from 35 seconds to 1 minute."
+    aspect_laptop1 = "Boot time"
+    # negative
+    text_laptop2 = "I can barely use any usb devices because they will not stay connected properly."
+    aspect_laptop2 = "usb devices"
+    # neutral
+    text_laptop3 = "I took it back for an Asus and same thing- blue screen which required me to remove the battery to reset."
+    aspect_laptop3 = "battery"
+
     # twitter case
     # positive
-    # text_rest1 = "The bread is top notch as well."
-    # aspect_rest1 = "bread"
-    # # negative
-    # text_rest2 = "In fact, this was not a Nicoise salad and was barely eatable."
-    # aspect_rest2 = "Nicoise salad"
-    # # neutral
-    # text_rest3 = "The pizza is the best if you like thin crusted pizza."
-    # aspect_rest3 = "thin crusted pizza"
-
-    # # laptop case
-    # # positive
-    # text_laptop1 = "Boot time is super fast, around anywhere from 35 seconds to 1 minute."
-    # aspect_laptop1 = "Boot time"
-    # # negative
-    # text_laptop2 = "I can barely use any usb devices because they will not stay connected properly."
-    # aspect_laptop2 = "usb devices"
-    # # neutral
-    # text_laptop3 = "I took it back for an Asus and same thing- blue screen which required me to remove the battery to reset."
-    # aspect_laptop3 = "battery"
-
-    # # twitter case
-    # # positive
-    # text_twitter1 = "3 by britney spears is an amazing song"
-    # aspect_twitter1 = "britney spears"
-    # # negative
-    # text_twitter2 = "God damn . That Sony remote for google is fucking hideeeeeous !"
-    # aspect_twitter2 = "google"
-    # # neutral
-    # text_twitter3 = "my 3-year-old was amazed yesterday to find that ' real ' 10 pin bowling is nothing like it is on the wii ..."
-    # aspect_twitter3 = "wii"
+    text_twitter1 = "3 by britney spears is an amazing song"
+    aspect_twitter1 = "britney spears"
+    # negative
+    text_twitter2 = "God damn . That Sony remote for google is fucking hideeeeeous !"
+    aspect_twitter2 = "google"
+    # neutral
+    text_twitter3 = "my 3-year-old was amazed yesterday to find that ' real ' 10 pin bowling is nothing like it is on the wii ..."
+    aspect_twitter3 = "wii"
 
     # model choice为1或2, dataset choice为1~3
-    # print("---------------------------------------------------")
-    # print("for test rest noMix model")
-    # result = infering(text_rest1, aspect_rest1, 1, 1, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_rest2, aspect_rest2, 1, 1, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_rest3, aspect_rest3, 1, 1, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test rest noMix model")
+    result = inf.evaluate(text_rest1, aspect_rest1, 1, 1, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_rest2, aspect_rest2, 1, 1, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_rest3, aspect_rest3, 1, 1, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
 
-    # print("---------------------------------------------------")
-    # print("for test laptop noMix model")
-    # result = infering(text_laptop1, aspect_laptop1, 1, 2, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_laptop2, aspect_laptop2, 1, 2, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_laptop3, aspect_laptop3, 1, 2, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test laptop noMix model")
+    result = inf.evaluate(text_laptop1, aspect_laptop1, 1, 2, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_laptop2, aspect_laptop2, 1, 2, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_laptop3, aspect_laptop3, 1, 2, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
 
-    # print("---------------------------------------------------")
-    # print("for test twitter noMix model")
-    # result = infering(text_twitter1, aspect_twitter1, 1, 3, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_twitter2, aspect_twitter2, 1, 3, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_twitter3, aspect_twitter3, 1, 3, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test twitter noMix model")
+    result = inf.evaluate(text_twitter1, aspect_twitter1, 1, 3, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_twitter2, aspect_twitter2, 1, 3, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_twitter3, aspect_twitter3, 1, 3, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
 
-    # print("---------------------------------------------------")
-    # print("for test rest bert-base model")
-    # result = infering(text_rest1, aspect_rest1, 2, 1, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_rest2, aspect_rest2, 2, 1, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_rest3, aspect_rest3, 2, 1, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test rest bert-base model")
+    result = inf.evaluate(text_rest1, aspect_rest1, 2, 1, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_rest2, aspect_rest2, 2, 1, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_rest3, aspect_rest3, 2, 1, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
     
-    # print("---------------------------------------------------")
-    # print("for test laptop bert-base model")
-    # result = infering(text_laptop1, aspect_laptop1, 2, 2, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_laptop2, aspect_laptop2, 2, 2, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_laptop3, aspect_laptop3, 2, 2, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test laptop bert-base model")
+    result = inf.evaluate(text_laptop1, aspect_laptop1, 2, 2, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_laptop2, aspect_laptop2, 2, 2, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_laptop3, aspect_laptop3, 2, 2, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
 
-    # print("---------------------------------------------------")
-    # print("for test twitter bert-base model")
-    # result = infering(text_twitter1, aspect_twitter1, 2, 3, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_twitter2, aspect_twitter2, 2, 3, False)
-    # print("the result is: {}".format(result))
-    # result = infering(text_twitter3, aspect_twitter3, 2, 3, False)
-    # print("the result is: {}".format(result))
-    # print("---------------------------------------------------")
+    print("---------------------------------------------------")
+    print("for test twitter bert-base model")
+    result = inf.evaluate(text_twitter1, aspect_twitter1, 2, 3, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_twitter2, aspect_twitter2, 2, 3, False)
+    print("the result is: {}".format(result))
+    result = inf.evaluate(text_twitter3, aspect_twitter3, 2, 3, False)
+    print("the result is: {}".format(result))
+    print("---------------------------------------------------")
 
     #############################################
     # this part is for showing the 
@@ -453,17 +585,17 @@ if __name__ == '__main__':
     # aspect attention weight显示
     # food的aspect attention weight关注的是前半句(但不是全在outstanding上)
     # perks的aspect attention weight关注的是后半句上,主要是在bad上
-    text_rest = "Although the food was outstanding, but the little 'perks' were bad."
-    aspect_rest1 = "food"
-    aspect_rest2 = "perks"
+    # text_rest = "Although the food was outstanding, but the little 'perks' were bad."
+    # aspect_rest1 = "food"
+    # aspect_rest2 = "perks"
 
-    print("---------------------------------------------------")
-    result = infering(text_rest, aspect_rest1, 1, 1, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # result = inf.evaluate(text_rest, aspect_rest1, 1, 1, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
 
-    print("---------------------------------------------------")
-    result = infering(text_rest, aspect_rest2, 1, 1, False)
-    print("the result is: {}".format(result))
-    print("---------------------------------------------------")
+    # print("---------------------------------------------------")
+    # result = inf.evaluate(text_rest, aspect_rest2, 1, 1, False)
+    # print("the result is: {}".format(result))
+    # print("---------------------------------------------------")
 
