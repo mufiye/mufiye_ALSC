@@ -22,6 +22,10 @@ Python 3.7
 6. [RGAT-ABSA](https://github.com/shenwzh3/RGAT-ABSA)
 ## 相关运行命令
 ### 启动训练脚本
+可以从根目录下的shell文件中寻找相应命令
+```python
+python train.py --gat_bert --embedding_type bert --dataset_name laptop --dropout 0.3 --num_heads 7 --hidden_size 200 --learning_rate 5e-5
+```
 ### 启动Demo System
 ```
 python manage.py runserver
