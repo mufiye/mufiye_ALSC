@@ -32,3 +32,5 @@ python manage.py runserver
 4. [DualGCN-ABSA](https://github.com/CCChenhao997/DualGCN-ABSA)
 5. [InterGCN-ABSA](https://github.com/BinLiang-NLP/InterGCN-ABSA)
 6. [RGAT-ABSA](https://github.com/shenwzh3/RGAT-ABSA)
+## Mention!
+如果有疑问，欢迎提供issue！
