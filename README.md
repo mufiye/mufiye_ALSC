@@ -14,7 +14,7 @@ Python 3.7
 ### showing system
 1. Django: pip install Django==3.2.12
 ## 数据集
-
+目前的dataset中不仅存放了原始数据集，还存放了被处理完的数据集；处理数据集的文件在data_processing包下。
 ## 相关运行命令
 ### 启动训练脚本
 可以从根目录下的shell文件中寻找相应命令, 具体参数的设置以shell文件中的为准
