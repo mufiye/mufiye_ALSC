@@ -17,9 +17,9 @@ Python 3.7
 
 ## 相关运行命令
 ### 启动训练脚本
-可以从根目录下的shell文件中寻找相应命令
+可以从根目录下的shell文件中寻找相应命令, 具体参数的设置以shell文件中的为准
 ```python
-python train.py --gat_bert --embedding_type bert --dataset_name laptop --dropout 0.3 --num_heads 7 --hidden_size 200 --learning_rate 5e-5
+bash train.sh
 ```
 ### 启动Demo System
 ```
