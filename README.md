@@ -20,3 +20,9 @@ Python 3.7
 4. [DualGCN-ABSA](https://github.com/CCChenhao997/DualGCN-ABSA)
 5. [InterGCN-ABSA](https://github.com/BinLiang-NLP/InterGCN-ABSA)
 6. [RGAT-ABSA](https://github.com/shenwzh3/RGAT-ABSA)
+## 相关运行命令
+### 启动训练脚本
+### 启动Demo System
+```
+python manage.py runserver
+```
