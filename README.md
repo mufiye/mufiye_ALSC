@@ -13,13 +13,8 @@ Python 3.7
 8. 用于训练数据可视化：tensorboard（pytorch1.2之后就自带了），pip install tb-nightly 
 ### showing system
 1. Django: pip install Django==3.2.12
-## Reference Project:
-1. [ABSA-pytorch](https://github.com/songyouwei/ABSA-PyTorch)
-2. [ASGCN](https://github.com/GeneZC/ASGCN)
-3. [Covolution_over_Dependency_Tree](https://github.com/BDBC-KG-NLP/Covolution_over_Dependency_Tree_EMNLP2019)
-4. [DualGCN-ABSA](https://github.com/CCChenhao997/DualGCN-ABSA)
-5. [InterGCN-ABSA](https://github.com/BinLiang-NLP/InterGCN-ABSA)
-6. [RGAT-ABSA](https://github.com/shenwzh3/RGAT-ABSA)
+## 数据集
+
 ## 相关运行命令
 ### 启动训练脚本
 可以从根目录下的shell文件中寻找相应命令
@@ -30,3 +25,10 @@ python train.py --gat_bert --embedding_type bert --dataset_name laptop --dropout
 ```
 python manage.py runserver
 ```
+## Reference Project:
+1. [ABSA-pytorch](https://github.com/songyouwei/ABSA-PyTorch)
+2. [ASGCN](https://github.com/GeneZC/ASGCN)
+3. [Covolution_over_Dependency_Tree](https://github.com/BDBC-KG-NLP/Covolution_over_Dependency_Tree_EMNLP2019)
+4. [DualGCN-ABSA](https://github.com/CCChenhao997/DualGCN-ABSA)
+5. [InterGCN-ABSA](https://github.com/BinLiang-NLP/InterGCN-ABSA)
+6. [RGAT-ABSA](https://github.com/shenwzh3/RGAT-ABSA)
