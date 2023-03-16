@@ -1,4 +1,5 @@
 # mufiye_ALSC
+The related paper is [Dual-Attention Model for Aspect-Level Sentiment Classification](https://arxiv.org/abs/2303.07689).
 ## 依赖包
 Python 3.7 
 
